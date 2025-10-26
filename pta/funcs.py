@@ -5,6 +5,9 @@ from .consts import PI
 def zeros(shape):
     return np.zeros(shape)
 
+def sqrt(x):
+    return np.sqrt(x)
+
 def sin(x):
     return np.sin(x)
 
