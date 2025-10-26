@@ -1,0 +1,85 @@
+\input{preamble}
+\author{Черносов Вячеслав}
+\title{Моделирование атмосферы нейтронной звезды с учетом слоя растекания}
+
+\begin{document}
+\maketitle
+\section{Описание гравитационной волны}
+\subsection{Физическое пространство}
+Гравитационная волна описывается как:
+$$\mathbf{h}_{ij}(t, \vec{x}, \hat{\Omega}) = \mathbf{h}(t - \hat{\Omega} \cdot \vec{x}) \cdot \mathbf{e}^{*}_{ij}(\hat{\Omega}) \cdot \mathbf{\Phi},$$
+где комплексные слагаемые равны:
+$$\mathbf{h}(t) \equiv h^{+}(t) + i h^{\times}(t), $$
+$$\mathbf{e}_{ij}(\hat{\Omega}) \equiv {e}_{ij}^{+}(\hat{\Omega}) + i {e}_{ij}^{\times}(\hat{\Omega}),$$
+$$\mathbf{\Phi} = \exp(-2i\psi)$$
+а $\psi$ -- угол поляризации.
+Красное смещение тогда будет равно:
+$$\mathbf{Z}(t, \hat{\Omega}) = \frac{1}{2} \frac{\hat{p}^i \hat{p}^j}{1 + \hat{\Omega} \cdot \hat{p}} \left[\mathbf{h}_{ij}(t, \vec{0}) - \mathbf{h}_{ij}(t - L, L\hat{p})\right],$$
+что можно переписать как:
+$$\mathbf{Z}(t, \hat{\Omega}) = \Delta \mathbf{h}(t, L\hat{p}, \hat{\Omega}) \cdot \mathbf{F}^{*}(\hat{\Omega})$$
+$$\mathbf{F}(\hat{\Omega}) = \frac{1}{2} \frac{\hat{p}^i \hat{p}^j}{1 + \hat{\Omega} \cdot  \hat{p}} \cdot \mathbf{e}_{ij}(\hat{\Omega}) $$
+$$\Delta \mathbf{h}(t, L\hat{p},  \hat{\Omega}) = \left[ \mathbf{h}(t) - \mathbf{h}(t - L (1 + \hat{\Omega} \cdot \hat{p})) \right] \cdot \mathbf{\Phi}$$
+
+\subsection{Фурье пространство}
+Гравитационную волну можно также расписать как сумму плоских волн:
+$$\mathbf{h}(t) = \int e^{i 2 \pi f t} \cdot \tilde{\mathbf{h}}(f) \cdot \mathrm{d} f$$
+Тогда $\Delta \mathbf{h}$ распишется как:
+$$\Delta \mathbf{h}(t, L\hat{p},  \hat{\Omega}) = 
+\int e^{i 2 \pi f t} \cdot (1 - e^{- i 2 \pi f  L (1 + \hat{\Omega} \cdot \hat{p}))}) \cdot \tilde{\mathbf{h}}(f) \cdot \mathbf{\Phi} \cdot \mathrm{d}  f,$$
+или же:
+$$\Delta \mathbf{h}(t, L\hat{p},  \hat{\Omega}) = 
+\int e^{i 2 \pi f t} \cdot \tilde{\mathbf{T}}(f, L\hat{p},  \hat{\Omega})\cdot \tilde{\mathbf{h}}(f) \cdot \mathbf{\Phi} \cdot \mathrm{d}  f,$$
+$$\tilde{\mathbf{T}}(f, L\hat{p},  \hat{\Omega}) = (1 - e^{- i 2 \pi f  L (1 + \hat{\Omega} \cdot \hat{p}))})$$
+Тогда красное смещение будет равно:
+$$\mathbf{Z}(t, \hat{\Omega}) = \int e^{i 2 \pi f t} \cdot  \tilde{\mathbf{h}}(f) \cdot \tilde{\mathbf{T}}(f, L\hat{p},  \hat{\Omega}) \cdot  \mathbf{F}^{*}(\hat{\Omega}) \cdot \mathbf{\Phi} \cdot \mathrm{d} f$$
+или же:
+$$\mathbf{Z}(t, \hat{\Omega}) = \int e^{i 2 \pi f t} \cdot \tilde{\mathbf{Z}}(f, \hat{\Omega}) \cdot \mathrm{d} f $$
+$$\tilde{\mathbf{Z}}(f, \hat{\Omega}) =  \tilde{\mathbf{h}}(f) \cdot \tilde{\mathbf{R}}(f, L\hat{p},  \hat{\Omega}) $$
+$$\tilde{\mathbf{R}}(f, L\hat{p},  \hat{\Omega}) = \tilde{\mathbf{T}}(f, L\hat{p},  \hat{\Omega}) \cdot  \mathbf{F}^{*}(\hat{\Omega}) \cdot \mathbf{\Phi}  $$
+Проинтегруем по сфере:
+$$\tilde{\mathbf{Z}}(f) = \int  \tilde{\mathbf{h}}(f) \cdot \tilde{\mathbf{R}}(f, L\hat{p},  \hat{\Omega}) \cdot \mathrm{d} \hat{\Omega}$$
+
+\subsection{Корреляции красных смещений}
+Корреляция для красных смещений считается как:
+$$ \mathbf{r}_{ab} (\tau) = \int \mathbf{Z}_a(t) \cdot \mathbf{Z}_b(t - \tau) \cdot \mathrm{d} t $$
+Мы можем также разложить её в ряд Фурье:
+$$ \mathbf{r}_{ab} (\tau) = \int e^{i 2 \pi f \tau} \cdot \tilde{\mathbf{\Gamma}}_{ab}(f) \cdot \mathrm{d} f $$
+и применить свойство корреляционной функции:
+$$\tilde{\mathbf{r}}_{ab}(f) = \tilde{\mathbf{Z}}_1(f) \cdot \tilde{\mathbf{Z}}_{2}(f)$$
+Тогда $\mathbf{\rho}_{ab}(\tau)$ выражается как:
+$$ \mathbf{r}_{ab} (\tau) = \int e^{i 2 \pi f \tau} \cdot \tilde{\mathbf{Z}}_a(f) \cdot \tilde{\mathbf{Z}}_{b}(f) \cdot \mathrm{d} f$$
+$$ \mathbf{r}_{ab} (\tau) = \int e^{i 2 \pi f \tau} \cdot \tilde{\mathbf{h}}_a(f) \cdot  \tilde{\mathbf{h}}_b(f)  \cdot \mathrm{d} f \int  \tilde{\mathbf{R}}_a(f, \hat{\Omega})  \cdot \tilde{\mathbf{R}}_b(f, \hat{\Omega}) \cdot \mathrm{d} \hat{\Omega} $$
+С другой стороны, корреляция $\tilde{\mathbf{h}}(f)$ выражается через спектр как:
+$$ \mathbf{H}(f) = \tilde{\mathbf{h}}_a(f) \cdot \tilde{\mathbf{h}}_b(f) = \tilde{\mathbf{h}}^2(f)$$
+$$ \mathbf{r}_{ab} (\tau) = \int e^{i 2 \pi f \tau} \cdot \mathbf{H}(f) \cdot \mathrm{d} f \int  \tilde{\mathbf{R}}_a(f, \hat{\Omega})  \cdot \tilde{\mathbf{R}}_b(f, \hat{\Omega}) \cdot \mathrm{d} \hat{\Omega} $$
+Корреляция в нуле будет равна:
+$$\mathbf{r}_{ab} (0) = \langle \mathbf{Z_a} ,\mathbf{Z_b} \rangle = \int H(f) \cdot \mathrm{d} f \int  \tilde{\mathbf{R}}_a(f, \hat{\Omega})  \cdot \tilde{\mathbf{R}}_b(f, \hat{\Omega}) \cdot \mathrm{d} \hat{\Omega} $$
+
+Корреляция в нуле будет равна:
+$$\mathbf{r}_{ab} (0) = \langle \mathbf{Z_a} ,\mathbf{Z_b} \rangle = \int H(f) \cdot \mathrm{d} f \int  \tilde{\mathbf{R}}_a(f, \hat{\Omega})  \cdot \tilde{\mathbf{R}}_b(f, \hat{\Omega}) \cdot \mathrm{d} \hat{\Omega} $$
+$$\mathbf{r}_{ab} \approx 4 \pi h^2 \cdot \frac{1}{4 \pi}\int \tilde{\mathbf{F}}_a(\hat{\Omega})  \cdot \tilde{\mathbf{F}}_b(\hat{\Omega}) \cdot \mathrm{d} \hat{\Omega} = 4 \pi h^2 \mu(\gamma)$$
+
+
+\subsection{Симуляция данных}
+
+В качестве входных параметров будем использовать спектр $\mathbf{H}(f)$.
+Тогда:
+$$\tilde{\mathbf{h}}(f) = \sqrt{\mathbf{H}(f)}$$
+$$\mathbf{h}(t) = \int e^{i 2 \pi f t} \cdot \sqrt{\mathbf{H}(f)}\cdot \mathrm{d} f$$
+$$\Delta \mathbf{h}(t, L\hat{p},  \hat{\Omega}) = \left[ \mathbf{h}(t) - \mathbf{h}(t - L (1 + \hat{\Omega} \cdot \hat{p})) \right] \cdot \mathbf{\Phi}$$
+$$\mathbf{Z}(t, \hat{\Omega}) = \Delta \mathbf{h}(t, L\hat{p}, \hat{\Omega}) \cdot \mathbf{F}^{*}(\hat{\Omega})$$
+$$\mathbf{Z}(t) = \int   \Delta \mathbf{h}(t, L\hat{p}, \hat{\Omega}) \cdot \mathbf{F}^{*}(\hat{\Omega}) \cdot \mathrm{d} \hat{\Omega}$$
+Получаем входной сигнал:
+$$Z(t) = \mathfrak{R}\left[\mathbf{Z}(t)\right]$$
+Тогда выходной сигнал будет выглядеть как:
+$$r_{ab} = \langle Z_a , Z_b \rangle \approx \int_{-T/2}^{T/2} Z_1(t) \cdot Z_2(t) \cdot \mathrm{d} t$$
+$$\Gamma_{ab}(\gamma) = \frac{r_{ab}}{4\pi h^2}$$
+\subsection{Примеры спектров}
+$$H(f) = A \cdot \delta(f - f_0)$$
+$$h^2 = \int H(f) \cdot \mathrm{d} f = \int  A \cdot \delta(f - f_0) \cdot \mathrm{d} f = A $$
+
+$$H(f) = A \cdot f^{-\alpha}$$
+$$h^2 = \int H(f) \cdot \mathrm{d} f = \int  A \cdot  f^{-\alpha} \cdot \mathrm{d} f = A $$
+
+
+\end{document}

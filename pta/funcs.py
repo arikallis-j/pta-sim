@@ -17,14 +17,23 @@ def cos(x):
 def arccos(x):
     return np.arccos(x)
 
+def sinc(x):
+    return np.sin(x)/x
+
 def exp(x):
     return np.exp(x)
 
 def ln(x):
     return np.log(x)
 
+def log(x):
+    return np.log10(x)
+
 def t_sum(indexing, a, b):
     return np.einsum(indexing,a,b)
+
+def delta_func(f, f_0, df):
+    return sinc(PI*(f - f_0)/df)/df
 
 def mu_0(gamma):
     cos_gamma = cos(gamma)

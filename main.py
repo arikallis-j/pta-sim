@@ -1,8 +1,7 @@
 import pta
 
+pa = pta.PulsarArray(100, key='angle')
+gw = pta.GravitationalWave(key='ipoint')#, param=(1, -5))
+grid = pta.Grid(100,100,2, 2)
 
-pa = pta.PulsarArray(100)
-gw = pta.GravitationalWave()
-grid = pta.Grid(100,100,100)
-
-grid.plot_HD_curve(pa, gw, key='exp')
+grid.plot_HD_curve(pa, gw, key='theory')
