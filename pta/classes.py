@@ -52,70 +52,18 @@ class PulsarArray:
             for k in range(self.N):
                 g = gamma[k]
                 p = np.array([np.sin(g), 0, np.cos(g)])
-                lp = 10 * kpc
+                lp = (k+1) * kpc
                 vp = lp * p
                 pulsar_array.append(p)
                 pulsar_dist.append(lp)
                 pulsar_coord.append(vp)
-
-        if self.key == 'cos':
-            pulsar_array = []
-            pulsar_dist = []
-            pulsar_coord = []
-            cos_gamma = np.linspace(-1, 1, self.N)
-            gamma = arccos(cos_gamma)
-            
-            for k in range(self.N):
-                g = gamma[k]
-                p = np.array([np.sin(g), 0, np.cos(g)])
-                lp = 10 * kpc
-                vp = lp * p
-                pulsar_array.append(p)
-                pulsar_dist.append(lp)
-                pulsar_coord.append(vp)
-            
-        if self.key == 'sphere':
-            pulsar_array = []
-            pulsar_dist = []
-            pulsar_coord = []
-            gamma = np.linspace(0, PI, self.N)
-            phi = np.linspace(0, 2*PI, self.N, endpoint=False)
-            for i in range(self.N):
-                ph = phi[i]
-                for k in range(self.N):
-                    g = gamma[k]
-                    p = np.array([cos(ph)*sin(g), sin(ph)*sin(g), cos(g)])
-                    lp = 10 * kpc
-                    vp = lp * p
-                    pulsar_array.append(p)
-                    pulsar_dist.append(lp)
-                    pulsar_coord.append(vp)
-        
-        if self.key == 'ball':
-            pulsar_array = []
-            pulsar_dist = []
-            pulsar_coord = []
-            gamma = np.linspace(0, PI, self.N)
-            phi = np.linspace(0, 2*PI, self.N, endpoint=False)
-            Lp = np.linspace(0.001, 30, 10)
-            for i in range(10):
-                lp = Lp[i] * kpc
-                for j in range(self.N):
-                    ph = phi[j]
-                    for k in range(self.N):
-                        g = gamma[k]
-                        p = np.array([cos(ph)*sin(g), sin(ph)*sin(g), cos(g)])
-                        vp = lp * p
-                        pulsar_array.append(p)
-                        pulsar_dist.append(lp)
-                        pulsar_coord.append(vp)
 
         self.pulsar_array = np.array(pulsar_array)
         self.pulsar_dist = np.array(pulsar_dist)
         self.pulsar_coord = np.array(pulsar_coord)
 
 class Grid:
-    def __init__(self, N_ph=10, N_th=10, N_t=10, N_f=10):
+    def __init__(self, pa, gw, N_ph=10, N_th=10, N_t=10, N_f=10):
         self.N_ph = N_ph
         self.N_th = N_th
         self.N_t = N_t
@@ -125,112 +73,95 @@ class Grid:
         self._create_vectors()
         self._create_times()
 
-    def redshift(self, pa, gw):
-        L, P = pa.pulsar_dist, pa.pulsar_array
-        N_p = P.shape[0]
-        Z = np.zeros((N_p,self.N_t))
-        t = np.zeros((N_p,self.N_t))
-        
+    def _generate_redshift(self, pa, gw):
+        P, L = pa.pulsar_array, pa.pulsar_dist
+        self.N_p = P.shape[0]
         self.H = gw.generate_wave(self.f, self.df)
-        h_tilde = sqrt(self.H)
-        h_tilde = np.tile(h_tilde[:,None, None, None],(1, self.N_t, self.N_th, self.N_ph))
-        f = np.tile(self.f[:,None, None, None],(1, self.N_t, self.N_th, self.N_ph))
-        df = np.tile(self.df[:,None, None, None],(1, self.N_t, self.N_th, self.N_ph))
+        self.h_tilda = sqrt(self.H)
 
-        for k in tqdm(range(N_p)):
+        h_tilda = np.tile(self.h_tilda[None, :], (self.N_t, 1))
+        f = np.tile(self.f[None, :], (self.N_t, 1))
+        df = np.tile(self.df[None, :], (self.N_t, 1))
+        t = np.tile(self.t[:, None],(1, self.N_f))
+        h = np.sum(exp(1j * 2 * PI * f * t) * h_tilda * df, axis=1)
+        
+        Z = np.zeros((self.N_p, self.N_t))
+
+        for k in tqdm(range(self.N_p)):
             p, lp = P[k], L[k]
-            alpha = lp * (1 + t_sum('lij,l->ij', self.Omega, p))
-            alpha = np.tile(alpha[None, None, :, :], (self.N_f, self.N_t, 1, 1))
-            tau = np.tile(self.t[None, :, None, None], (self.N_f, 1, self.N_th, self.N_ph))
-            tau_e, tau_p = tau, tau - alpha 
-            h_e = np.sum(exp(2j * PI * f * tau_e) * h_tilde * df, axis=0)
-            h_p = np.sum(exp(2j * PI * f * tau_p) * h_tilde * df, axis=0)
+            beta = lp * (1 + t_sum('lij,l->ij', self.Omega, p))
+            
+            beta = np.tile(beta[None, None, :, :], (self.N_t, self.N_f, 1, 1))
+            t = np.tile(self.t[:, None, None, None],(1, self.N_f, self.N_th, self.N_ph))
+            t_p = t - beta
+
+            f = np.tile(self.f[None, :, None, None], (self.N_t, 1, self.N_th, self.N_ph))
+            df = np.tile(self.df[None, :, None, None], (self.N_t, 1, self.N_th, self.N_ph))
+            h_tilda = np.tile(self.h_tilda[None, :, None, None], (self.N_t, 1, self.N_th, self.N_ph))
+            h_p = np.sum(exp(1j * 2 * PI * f * t_p) * h_tilda * df, axis=1)
+            
+            h_e = np.tile(h[:, None, None], (1, self.N_th, self.N_ph))
             delta_h = h_e - h_p
+            
             F = 1/2 * t_sum('lm,lmij->ij',t_sum('l,m->lm', p, p), self.e) / (1 + t_sum('lij,l->ij', self.Omega, p))
-            F = np.tile(F[None,:,:], (self.N_t, 1, 1))
-            dOmega = np.tile(self.dOmega[None,:,:], (self.N_t, 1, 1))
-            Z[k,:] = np.sum(np.real(delta_h * np.conjugate(F)) * dOmega, axis=(1,2))
-            t[k,:] = self.t
+            F = np.tile(F[None, :, :], (self.N_t, 1, 1))
+            dOmega = np.tile(self.dOmega[None, :, :], (self.N_t, 1, 1))
+            Z[k] = np.real(np.sum(delta_h * F * dOmega, axis=(1,2)))
+        
+        self.Z = Z
 
-        return t, Z
+    def HD_obs(self, pa, gw):
+        self._generate_redshift(pa, gw)
+        p, z = pa.pulsar_array, self.Z
+        h2 = np.sum(self.H * self.df)
 
-
-    def HD_exp(self, pa, gw):
-        p = pa.pulsar_array
-        N_p = pa.pulsar_array.shape[0]
-        t, Z = self.redshift(pa, gw)
-        h2 = np.sum(self.H *self.df)
-
-        i, j = np.arange(0,N_p), np.arange(0,N_p)
+        i, j = np.arange(0, self.N_p),  np.arange(0, self.N_p)
         i, j = np.meshgrid(i, j, indexing='xy')
         mask = i>j
         i, j = i[mask], j[mask]
 
-        mu_12 = np.zeros(i.shape)
-        gamma = np.zeros(i.shape)
-        for k in tqdm(range(i.shape[0])):
-            ii, jj = i[k], j[k]
-            
-            Z1, Z2 = Z[ii], Z[jj]
-            p1, p2 = p[ii], p[jj]
-            
-            rho_12 = np.sum(Z1 * Z2) * self.dt
-            mu_12[k] = rho_12/(h2 * 4 * PI) 
-            gamma[k] = arccos(t_sum('l,l->',p1,p2))
+        p1, p2 = p[i], p[j]
+        z1, z2 = z[i], z[j]
 
-        gamma, mu_12 = np.sort(gamma), mu_12[np.argsort(gamma)]
-        
-        gamma_u = np.linspace(0+EPS, PI-EPS, 100)
-        indices = np.digitize(gamma, gamma_u)
-        mu_u = np.array([mu_12[indices == i].mean() for i in range(0, len(gamma_u))])
+        r12 = np.sum(z1 * z2 * self.dt, axis=1)
+        mu = r12 / (4*PI*h2)
 
-        return gamma_u, mu_u, gamma, mu_12
-    
+        gamma = arccos(t_sum('kl,kl->k',p1,p2))
+
+        gamma_m = np.linspace(0, PI, 100)
+        mu_m = np.zeros(gamma_m.shape)
+        N_m = np.zeros(gamma_m.shape)
+
+        for k in range(gamma.shape[0]):
+            mu_k, gamma_k = mu[k], gamma[k]
+            for i in range(gamma_m.shape[0]-1):
+                if gamma_m[i] <=  gamma_k and gamma_k < gamma_m[i+1]:
+                    mu_m[i] += mu_k
+                    N_m[i] += 1
+        mu_m[N_m!=0] = mu_m[N_m!=0] / N_m[N_m!=0]
+        mu_m[N_m==0] = None
+        print(mu_m)
+
+
+        return gamma, mu, gamma_m, mu_m
+
     def HD_curve(self, pa, gw):
-        L, p = pa.pulsar_dist,  pa.pulsar_array
+        p = pa.pulsar_array
         Np = p.shape[0]
-        mu = []
-        gamma = []
 
         i, j = np.arange(0,Np),  np.arange(0,Np)
         i, j = np.meshgrid(i, j, indexing='xy')
         mask = i>j
+        i, j = i[mask], j[mask]
 
-        p1, p2 = p[i][mask], p[j][mask]
-        L1, L2 = L[i][mask], L[j][mask]
+        p1, p2 = p[i], p[j]
 
         F_1 = 1/2 * t_sum('lmk,lmij->kij',t_sum('kl,km->lmk', p1, p1), self.e) / (1 + t_sum('lij,kl->kij', self.Omega, p1))
         F_2 = 1/2 * t_sum('lmk,lmij->kij',t_sum('kl,km->lmk', p2, p2), self.e) / (1 + t_sum('lij,kl->kij', self.Omega, p2))
-        
-        # f = np.tile(self.f[:,None,],(1, L1.shape[0]))
-        # L1 = np.tile(L1[None,:], (self.N_f, 1))
-        # L2 = np.tile(L2[None,:], (self.N_f, 1))
-
-        # alpha_1 = L1*f
-        # alpha_2 = L2*f
-        # alpha_1 = np.tile(alpha_1[:, :, None, None], (1, 1, self.N_th, self.N_ph))
-        # alpha_2 = np.tile(alpha_2[:, :, None, None], (1, 1, self.N_th, self.N_ph))
-
-        # beta_1 = (1 + t_sum('lij,kl->kij', self.Omega, p1))
-        # beta_2 = (1 + t_sum('lij,kl->kij', self.Omega, p2))
-        # beta_1 = np.tile(beta_1[None, :, :, :], (self.N_f, 1, 1, 1))
-        # beta_2 = np.tile(beta_2[None, :, :, :], (self.N_f, 1, 1, 1))
-
-        # df = np.tile(self.df[:, None, None, None],(1, L1.shape[1], self.N_th, self.N_ph))
-
-        # self.H = gw.generate_wave(self.f, self.df)
-
-        # H = np.tile(self.H[:, None, None, None],(1, L1.shape[1], self.N_th, self.N_ph))
-
-        # T_1 =  np.sum(1 - np.exp(-1j  * 2 * PI * alpha_1 * beta_1) * H * df, axis=0)
-        # T_2 =  np.sum(1 - np.exp(-1j  * 2 * PI * alpha_2 * beta_2) * H * df, axis=0)
-
-        R_1 = F_1 #* T_1
-        R_2 = F_2 #* T_2
 
         gamma = arccos(t_sum('kl,kl->k',p1,p2))
         
-        mu = 1/(4*PI) * np.real(np.sum(R_1 * np.conjugate(R_2) * self.dOmega, axis=(1,2)))
+        mu = 1/(4*PI) * np.real(np.sum(F_1 * np.conjugate(F_2) * self.dOmega, axis=(1,2)))
 
         return gamma, mu
 
@@ -241,8 +172,8 @@ class Grid:
         if key=='theory':
             gamma_12, Gamma_12 = self.HD_curve(pa, gw)
 
-        elif key=='exp':
-            gamma, Gamma, gamma_12, Gamma_12 = self.HD_exp(pa, gw)
+        if key=='obs':
+            gamma_12, Gamma_12, gamma, Gamma = self.HD_obs(pa, gw)
 
         gamma_0 = np.linspace(0 + EPS, PI, 1000)
         Gamma_0 = mu_0(gamma_0)

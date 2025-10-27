@@ -1,12 +1,12 @@
 # Fdb version 4
-["pdflatex"] 1761463997.61219 "/home/alice/Desktop/CODE/Cosmic Strings/pta-sim/paper/paper.tex" "paper.pdf" "paper" 1761463997.94707 0
+["pdflatex"] 1761527092.04022 "/home/alice/Desktop/CODE/Cosmic Strings/pta-sim/paper/paper.tex" "paper.pdf" "paper" 1761527092.39741 0
   "/home/alice/.texlive/texmf-var/fonts/tfm/lh/lh-t2a/labx1200.tfm" 1760876741.64241 3308 eee81981029f67083258db36df06e523 ""
   "/home/alice/.texlive/texmf-var/fonts/tfm/lh/lh-t2a/labx1440.tfm" 1760876739.93614 3304 6a543c07045572737981351171e0505e ""
   "/home/alice/.texlive/texmf-var/fonts/tfm/lh/lh-t2a/larm1000.tfm" 1760887312.23691 3220 0e417eaf233b160335902e97259a6c77 ""
   "/home/alice/.texlive/texmf-var/fonts/tfm/lh/lh-t2a/larm1200.tfm" 1760876594.11418 3240 c2435f2b5cd66d4930bc29b8df87967e ""
   "/home/alice/.texlive/texmf-var/fonts/tfm/lh/lh-t2a/larm1440.tfm" 1760876738.21135 3256 3daaa33cf35cf3f354983aa3214ecd7f ""
   "/home/alice/.texlive/texmf-var/fonts/tfm/lh/lh-t2a/larm1728.tfm" 1760876734.783 3252 92d08740ce00199d6cf9ff4aaada81d1 ""
-  "/home/alice/Desktop/CODE/Cosmic Strings/pta-sim/paper/paper.tex" 1761463997.34986 6918 15b126a3998c9ff77dc2abc05f9ea66b ""
+  "/home/alice/Desktop/CODE/Cosmic Strings/pta-sim/paper/paper.tex" 1761527091.79619 2658 7500ca24d7bc2a957aabfb3d60faafc8 ""
   "/usr/share/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t2a.enc" 1755987285 3141 82d5616418ed8d5de703b3951bedecb4 ""
   "/usr/share/texmf-dist/fonts/map/fontname/texfonts.map" 1755987285 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1755987285 1004 54797486969f23fa377b128694d548df ""
@@ -34,7 +34,6 @@
   "/usr/share/texmf-dist/fonts/tfm/public/cm/cmsy6.tfm" 1755987285 1116 933a60c408fc0a863a92debe84b2d294 ""
   "/usr/share/texmf-dist/fonts/tfm/public/cm/cmsy8.tfm" 1755987285 1120 8b7d695260f3cff42e636090a8002094 ""
   "/usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb" 1755987285 34811 78b52f49e893bcba91bd7581cdc144c0 ""
-  "/usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx7.pfb" 1755987285 32007 e8fa0078355f39467039935974716569 ""
   "/usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb" 1755987285 30251 6afa5cb1d0204815a708a080681d4674 ""
   "/usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb" 1755987285 36299 5f9df58c2139e7edcf37c8fca4bd384d ""
   "/usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb" 1755987285 36281 c355509802a035cadc5f15869451dcee ""
@@ -90,8 +89,8 @@
   "/usr/share/texmf-dist/web2c/texmf.cnf" 1755987285 42087 b0f9697c952c8f5a8eede4134282cb0d ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1760875416 481005 0ea1795aa6a1444f7c0c38913505d734 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1760875639 2008246 476d7663e6154e4484ea1a4decb3a019 ""
-  "paper.aux" 1761463997.86161 973 a8ce7e7cb8b2de13e418f57ad5b43f9b "pdflatex"
-  "paper.tex" 1761463997.34986 6918 15b126a3998c9ff77dc2abc05f9ea66b ""
+  "paper.aux" 1761527092.31163 667 395b39caa529cc8a5c27b8f7f32b4ba8 "pdflatex"
+  "paper.tex" 1761527091.79619 2658 7500ca24d7bc2a957aabfb3d60faafc8 ""
   "preamble.tex" 1761448344.20329 897 daba48a6d09a1341ea8bb04679402172 ""
   (generated)
   "paper.aux"
