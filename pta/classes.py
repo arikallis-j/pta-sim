@@ -1,14 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
-from .consts import PI, EPS
-from .funcs import t_sum, sin, cos, exp, sqrt, arccos, zeros, mu_0
 from tqdm import tqdm
 
-year = 3.1536e7 
-f_yr = 1/year
-pc = 3.26*year
-kpc = 1e3 * pc
+from .consts import PI, EPS, year, f_yr, kpc
+from .funcs import t_sum, sin, cos, exp, sqrt, arccos, zeros, mu_0
+
 
 class GravitationalWave:
     def __init__(self, key='ipoint', param=(1, 100e-9)):
@@ -39,7 +35,7 @@ class GravitationalWave:
 class PulsarArray:
     def __init__(self, N=10, key='angle'):
         self.key = key
-        self.N = N
+        self.N = N if N%2==0 else N+1
         self._create_pulsar_array()
 
     def _create_pulsar_array(self):
@@ -47,12 +43,11 @@ class PulsarArray:
             pulsar_array = []
             pulsar_dist = []
             pulsar_coord = []
-            gamma = np.linspace(0, PI, self.N)
-            
+            gamma = np.linspace(0, 2*PI, self.N+1)[:self.N:]
             for k in range(self.N):
                 g = gamma[k]
                 p = np.array([np.sin(g), 0, np.cos(g)])
-                lp = (k+1) * kpc
+                lp = 10 * kpc
                 vp = lp * p
                 pulsar_array.append(p)
                 pulsar_dist.append(lp)
@@ -63,11 +58,12 @@ class PulsarArray:
         self.pulsar_coord = np.array(pulsar_coord)
 
 class Grid:
-    def __init__(self, pa, gw, N_ph=10, N_th=10, N_t=10, N_f=10):
+    def __init__(self, N_ph=10, N_th=10, N_t=10, N_f=10, N_batch=1):
         self.N_ph = N_ph
         self.N_th = N_th
         self.N_t = N_t
         self.N_f = N_f
+        self.N_batch = N_batch
 
         self._create_angles()
         self._create_vectors()
@@ -83,67 +79,78 @@ class Grid:
         f = np.tile(self.f[None, :], (self.N_t, 1))
         df = np.tile(self.df[None, :], (self.N_t, 1))
         t = np.tile(self.t[:, None],(1, self.N_f))
-        h = np.sum(exp(1j * 2 * PI * f * t) * h_tilda * df, axis=1)
+        self.h = np.sum(exp(1j * 2 * PI * f * t) * h_tilda * df, axis=1)
         
         Z = np.zeros((self.N_p, self.N_t))
-
+        N_batch = 10
         for k in tqdm(range(self.N_p)):
-            p, lp = P[k], L[k]
-            beta = lp * (1 + t_sum('lij,l->ij', self.Omega, p))
-            
-            beta = np.tile(beta[None, None, :, :], (self.N_t, self.N_f, 1, 1))
-            t = np.tile(self.t[:, None, None, None],(1, self.N_f, self.N_th, self.N_ph))
-            t_p = t - beta
+            ii, jj = np.arange(0, self.N_th),  np.arange(0, self.N_ph)
+            ii, jj = np.meshgrid(ii, jj, indexing='xy')
+            z = 0
+            for n in range(self.N_batch):
+                for m in range(self.N_batch):
+                    i, j = ii[n::N_batch,m::N_batch], jj[n::N_batch,m::N_batch]
+                    p, lp = P[k], L[k]
+                    beta = lp * (1 + t_sum('lij,l->ij', self.Omega[:,i,j], p))
+                    
+                    t = np.tile(self.t[:, None, None, None],(1, self.N_f, i.shape[0], i.shape[1]))
+                    t_p = t - beta
 
-            f = np.tile(self.f[None, :, None, None], (self.N_t, 1, self.N_th, self.N_ph))
-            df = np.tile(self.df[None, :, None, None], (self.N_t, 1, self.N_th, self.N_ph))
-            h_tilda = np.tile(self.h_tilda[None, :, None, None], (self.N_t, 1, self.N_th, self.N_ph))
-            h_p = np.sum(exp(1j * 2 * PI * f * t_p) * h_tilda * df, axis=1)
-            
-            h_e = np.tile(h[:, None, None], (1, self.N_th, self.N_ph))
-            delta_h = h_e - h_p
-            
-            F = 1/2 * t_sum('lm,lmij->ij',t_sum('l,m->lm', p, p), self.e) / (1 + t_sum('lij,l->ij', self.Omega, p))
-            F = np.tile(F[None, :, :], (self.N_t, 1, 1))
-            dOmega = np.tile(self.dOmega[None, :, :], (self.N_t, 1, 1))
-            Z[k] = np.real(np.sum(delta_h * F * dOmega, axis=(1,2)))
-        
+                    f = np.tile(self.f[None, :, None, None], (self.N_t, 1, i.shape[0], i.shape[1]))
+                    df = np.tile(self.df[None, :, None, None], (self.N_t, 1, i.shape[0], i.shape[1]))
+                    h_tilda = np.tile(self.h_tilda[None, :, None, None], (self.N_t, 1, i.shape[0], i.shape[1]))
+                    h_p = np.sum(exp(1j * 2 * PI * f * t_p) * h_tilda * df, axis=1)
+                    h_e = np.tile(self.h[:, None, None], (1, i.shape[0], i.shape[1]))
+                    delta_h = h_e - h_p
+
+                    F = 1/2 * t_sum('lm,lmij->ij',t_sum('l,m->lm', p, p), self.e[:,:,i,j]) / (1 + t_sum('lij,l->ij', self.Omega[:,i,j], p))
+                    F = np.tile(F[None, :, :], (self.N_t, 1, 1))
+
+                    dOmega = np.tile(self.dOmega[i,j][None, :, :], (self.N_t, 1, 1))
+                    z += np.sum(delta_h * np.conjugate(F) * dOmega, axis=(1,2))
+            Z[k] = np.real(z)
+
         self.Z = Z
+        
 
     def HD_obs(self, pa, gw):
         self._generate_redshift(pa, gw)
+
         p, z = pa.pulsar_array, self.Z
         h2 = np.sum(self.H * self.df)
 
         i, j = np.arange(0, self.N_p),  np.arange(0, self.N_p)
         i, j = np.meshgrid(i, j, indexing='xy')
-        mask = i>j
+        mask = i>=j
         i, j = i[mask], j[mask]
 
         p1, p2 = p[i], p[j]
         z1, z2 = z[i], z[j]
+        mu = np.zeros(i.shape)
 
-        r12 = np.sum(z1 * z2 * self.dt, axis=1)
-        mu = r12 / (4*PI*h2)
+        for k in tqdm(range(i.shape[0])):
+            r12 = np.sum(z1[k] * z2[k] * self.dt)
+            mu[k] = r12 / (4*PI*h2)
 
         gamma = arccos(t_sum('kl,kl->k',p1,p2))
 
-        gamma_m = np.linspace(0, PI, 100)
+        gamma_m = np.linspace(0, PI, 10)
         mu_m = np.zeros(gamma_m.shape)
         N_m = np.zeros(gamma_m.shape)
 
-        for k in range(gamma.shape[0]):
+        for k in tqdm(range(gamma.shape[0])):
             mu_k, gamma_k = mu[k], gamma[k]
             for i in range(gamma_m.shape[0]-1):
                 if gamma_m[i] <=  gamma_k and gamma_k < gamma_m[i+1]:
                     mu_m[i] += mu_k
                     N_m[i] += 1
-        mu_m[N_m!=0] = mu_m[N_m!=0] / N_m[N_m!=0]
-        mu_m[N_m==0] = None
-        print(mu_m)
+            if gamma_k > gamma_m[-2] and gamma_k <= gamma_m[-1]:
+                mu_m[-1] += mu_k
+                N_m[-1] += 1
 
+        mu_m = mu_m / N_m
 
-        return gamma, mu, gamma_m, mu_m
+        return gamma, mu , gamma_m, mu_m
 
     def HD_curve(self, pa, gw):
         p = pa.pulsar_array
@@ -151,7 +158,7 @@ class Grid:
 
         i, j = np.arange(0,Np),  np.arange(0,Np)
         i, j = np.meshgrid(i, j, indexing='xy')
-        mask = i>j
+        mask = i>=j
         i, j = i[mask], j[mask]
 
         p1, p2 = p[i], p[j]
@@ -180,7 +187,7 @@ class Grid:
 
         plt.grid(True)
         plt.scatter(gamma_12 * 180/PI, Gamma_12, c='blue', linewidths=1, label='PTA')
-        plt.plot(gamma * 180/PI, Gamma, color='red', label='exp HD')
+        plt.plot(gamma * 180/PI, Gamma, color='red', label='obs HD')
         plt.plot(gamma_0 * 180/PI, Gamma_0, color='black', label='theory HD')
 
         plt.title("HD curve")
@@ -228,7 +235,6 @@ class Grid:
         f, df = exp(log_f), np.zeros(log_f.shape)
         df[:-1:] = f[1::] - f[:-1:]
         df[-1] = exp(np.log(f2) + log_df) - f2
-
 
         self.T, self.f1, self.f2 = T, f1, f2
         self.t, self.dt = t, dt
