@@ -82,14 +82,13 @@ class Grid:
         self.h = np.sum(exp(1j * 2 * PI * f * t) * h_tilda * df, axis=1)
         
         Z = np.zeros((self.N_p, self.N_t))
-        N_batch = 10
         for k in tqdm(range(self.N_p)):
             ii, jj = np.arange(0, self.N_th),  np.arange(0, self.N_ph)
             ii, jj = np.meshgrid(ii, jj, indexing='xy')
             z = 0
             for n in range(self.N_batch):
                 for m in range(self.N_batch):
-                    i, j = ii[n::N_batch,m::N_batch], jj[n::N_batch,m::N_batch]
+                    i, j = ii[n::self.N_batch,m::self.N_batch], jj[n::self.N_batch,m::self.N_batch]
                     p, lp = P[k], L[k]
                     beta = lp * (1 + t_sum('lij,l->ij', self.Omega[:,i,j], p))
                     
@@ -134,7 +133,7 @@ class Grid:
 
         gamma = arccos(t_sum('kl,kl->k',p1,p2))
 
-        gamma_m = np.linspace(0, PI, 10)
+        gamma_m = np.linspace(0, PI, 11)
         mu_m = np.zeros(gamma_m.shape)
         N_m = np.zeros(gamma_m.shape)
 
