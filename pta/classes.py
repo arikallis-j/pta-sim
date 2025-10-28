@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 from tqdm import tqdm
 
 from .consts import PI, EPS, year, f_yr, kpc
@@ -47,7 +48,7 @@ class PulsarArray:
             for k in range(self.N):
                 g = gamma[k]
                 p = np.array([np.sin(g), 0, np.cos(g)])
-                lp = 10 * kpc
+                lp = 100 * kpc
                 vp = lp * p
                 pulsar_array.append(p)
                 pulsar_dist.append(lp)
@@ -171,7 +172,7 @@ class Grid:
 
         return gamma, mu
 
-    def plot_HD_curve(self, pa=None, gw=None, key='theory'):
+    def plot_HD_curve(self, pa=None, gw=None, key='theory', show=True):
         gamma, Gamma = np.array([]), np.array([])
         gamma_12, Gamma_12  = np.array([]), np.array([])
 
@@ -190,10 +191,14 @@ class Grid:
         plt.plot(gamma_0 * 180/PI, Gamma_0, color='black', label='theory HD')
 
         plt.title("HD curve")
-        plt.xlabel("$\gamma$, deg")
-        plt.ylabel("$\Gamma(\gamma)$")
+        plt.xlabel("$\\gamma$, deg")
+        plt.ylabel("$\\Gamma(\\gamma)$")
         plt.legend()
-        plt.show()
+        if not os.path.exists('data'):
+            os.mkdir('data')
+        plt.savefig('data/HD_obs.png')
+        if show:
+            plt.show()
 
     def _create_angles(self):
         dphi, dtheta = 2*PI/(self.N_ph -1), PI/(self.N_th - 1)
