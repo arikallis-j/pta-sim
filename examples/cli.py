@@ -1,6 +1,6 @@
 import typer
 
-from .pta import *
+from pta import *
 
 app = typer.Typer()
 

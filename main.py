@@ -1,11 +1,11 @@
-import pta.pta as pta
+import pta
 
 class Test(pta.Experiment):
-    def __init__(self, n_map=100, n_spec=100, n_arr=100, distribution=pta.dipole, spectrum=pta.delta_1d, distr_args=(1), spec_args=(10)):
+    def __init__(self, n_map=100, n_spec=100, n_arr=100, seed_psr=42, seed_bg=43, distribution=pta.dipole, spectrum=pta.delta_1d, distr_args=(1), spec_args=(10)):
         self.skymap = pta.SkyMap(n_map)
         self.timeline = pta.TimeLine(n_spec)
-        self.pulsar_arr = pta.PulsarArray(n_arr)
-        self.telescope = pta.Telescope(self.skymap, self.timeline, self.pulsar_arr)
+        self.pulsar_arr = pta.PulsarArray(n_arr, seed_psr=seed_psr)
+        self.telescope = pta.Telescope(self.skymap, self.timeline, self.pulsar_arr, seed_bg=seed_bg)
         self.grav_wave = pta.GravitationalWave(distribution=distribution, spectrum=spectrum)
         self.spec_args = spec_args
         self.distr_args = distr_args
@@ -29,6 +29,8 @@ class Test(pta.Experiment):
 test = Test(n_map=100, 
             n_spec=10, 
             n_arr=1000, 
+            seed_psr=42,
+            seed_bg=43,
             distribution=pta.isotropic, 
             spectrum=pta.delta_1d,)
 test.run()

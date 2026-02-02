@@ -1,92 +1,10 @@
 import healpy as hp
 import numpy as np
 import matplotlib.pyplot as plt
-from tqdm import tqdm
-from abc import ABC, abstractmethod
 import os
-
-PI = np.pi
-rad = 180/PI
-deg = PI/180
-year = 3.1536e7 
-f_yr = 1 / year
-pc = 3.26 * year
-kpc = 1e3 * pc
-EPS = 1e-5
-
-seed_psr, seed_bg = 42, 43
-rng_psr = np.random.default_rng(seed=seed_psr)
-rng_bg = np.random.default_rng(seed=seed_bg)
-
-
-def mu_0(gamma):
-    cos_gamma = np.cos(gamma)
-    mu = 1/3 - 1/6 * (1 - cos_gamma)/2 + (1 - cos_gamma)/2 * np.log((1 - cos_gamma)/2)
-    return mu
-
-# Distributions
-def isotropic(skymap, args=None):
-    return np.ones(skymap.phi.shape)
-
-def delta_2d(skymap, args=(PI/2,0)):
-    theta0, phi0 = args
-    ipix = hp.ang2pix(skymap.nside, theta0, phi0)
-    delta = np.zeros(skymap.npix, dtype=float)
-    delta[ipix] = 4*PI / skymap.dOmega
-    return delta
-
-def string_2d(skymap, args=(PI/2, 360)):
-    theta0, lenght = args
-    phi = np.linspace(-lenght/2, +lenght/2 , 1000) * deg
-    theta = np.full_like(phi, PI/2)
-    ipixs = hp.ang2pix(skymap.nside, theta, phi)
-    delta = np.zeros(skymap.npix, dtype=float)
-    delta[ipixs] = 4*PI / skymap.dOmega / len(ipixs)
-    return delta
-
-def dipole(skymap, args=None):
-    cond = skymap.phi <= PI
-    ipix = hp.ang2pix(skymap.nside, skymap.theta[cond], skymap.phi[cond])
-    dipole = np.zeros(skymap.npix)
-    dipole[ipix] = 4*PI / skymap.dOmega / len(ipix)
-    return dipole
-
-def quadrupole(skymap, args=None):
-    cond = np.logical_and(skymap.phi <= PI, skymap.theta <= PI/2)
-    ipix = hp.ang2pix(skymap.nside, skymap.theta[cond], skymap.phi[cond])
-    dipole = np.zeros(skymap.npix)
-    dipole[ipix] = 4*PI / skymap.dOmega / len(ipix)
-    return dipole
-
-def point(skymap, args=(PI/2,0,100)):
-    theta0, phi0, radius_deg = args
-    vec_center = hp.ang2vec(theta0, phi0) 
-    ipix_disc = hp.query_disc(skymap.nside, vec=vec_center, radius=np.radians(radius_deg))
-    point = np.zeros(skymap.npix, dtype=float)
-    if len(ipix_disc) == 0:
-        ipix = hp.ang2pix(skymap.nside, theta0, phi0, nest=False)
-        point[ipix] = 4*PI / skymap.dOmega
-    else:
-        point[ipix_disc] = 4*PI / skymap.dOmega / len(ipix_disc)
-    
-    return point
-
-# Spectra
-
-def delta_1d(timeline, args=(10)):
-    f0 = args
-    idx = np.argmin(np.abs(timeline.f - f0))
-    delta = np.zeros_like(timeline.f)
-    delta[idx] = 1.0/timeline.df
-    return delta
-
-def power(timeline, args=(-5)):
-    alpha = args
-    d = np.abs(timeline.f + EPS)**(alpha)
-    d[timeline.f==0] = 0
-    norm = 1 / np.sum(d * timeline.df)
-    return norm * d
-
+from tqdm import tqdm
+from .const import *
+from .funcs import *
 
 class SkyMap:
     def __init__(self, nside = 8):
@@ -185,17 +103,18 @@ class TimeLine:
             plt.show()
 
 class PulsarArray:
-    def __init__(self, n_array, radius=1):
+    def __init__(self, n_array, radius=1, seed_psr=42):
         self.n_array = n_array
         self.radius = radius
+        self.rng_psr = np.random.default_rng(seed=seed_psr)
         self._init_array()
 
     def _init_array(self):
-        phi = rng_psr.uniform(0, 2*PI, self.n_array)
-        cos_theta = rng_psr.uniform(-1, 1, self.n_array)
+        phi = self.rng_psr.uniform(0, 2*PI, self.n_array)
+        cos_theta = self.rng_psr.uniform(-1, 1, self.n_array)
         theta = np.arccos(cos_theta)
 
-        rho = self.radius * rng_psr.uniform(0, 1, self.n_array) ** (1/3)
+        rho = self.radius * self.rng_psr.uniform(0, 1, self.n_array) ** (1/3)
 
         x = rho * np.sin(theta) * np.cos(phi)
         y = rho * np.sin(theta) * np.sin(phi)
@@ -252,10 +171,11 @@ class GravitationalWave:
         return H, G
 
 class Telescope:
-    def __init__(self, skymap, timeline, pulsar_arr):
+    def __init__(self, skymap, timeline, pulsar_arr, seed_bg=43):
         self.skymap = skymap
         self.timeline = timeline
         self.pulsar_arr = pulsar_arr
+        self.rng_bg = np.random.default_rng(seed=seed_bg)
 
     def observe(self, grav_wave):
         p = self.pulsar_arr.pulsar_vec
@@ -264,7 +184,7 @@ class Telescope:
         Nt = self.timeline.n_times
         Ng = self.skymap.npix
         H, G = grav_wave.generate_wave(self.timeline, self.skymap)
-        eta = (rng_bg.normal(size=Ng) + 1j * rng_bg.normal(size=Ng)) / np.sqrt(2 * 4 * PI)
+        eta = (self.rng_bg.normal(size=Ng) + 1j * self.rng_bg.normal(size=Ng)) / np.sqrt(2 * 4 * PI)
 
         self.skymap.plot(G * np.abs(eta)**2 , title='Gravitational Wave Background')
 
@@ -280,7 +200,7 @@ class Telescope:
 
             beta = np.tile(beta[None,:], (Nt, 1))
             
-            alpha = l * f * (kpc * f_yr)
+            alpha = l * f * (KPC * F_YR)
 
             T =  1 - np.exp(-1j  * 2 * PI * alpha * beta)
 
@@ -357,11 +277,11 @@ class Telescope:
     def plot(self, key='hd', show=True, save=True):
         if key == 'hd':
             plt.grid(True)
-            plt.scatter(self.gamma_pta * rad, self.mu_pta, c='blue', linewidths=1, label='PTA')
-            plt.plot(self.gamma_mean * rad, self.mu_mean, color='red', label='obs HD')
-            plt.plot(self.gamma_mean * rad, self.mu_mean + self.mu_std, color='red', linestyle='--', label='obs Var[HD]')
-            plt.plot(self.gamma_mean * rad, self.mu_mean - self.mu_std, color='red', linestyle='--')
-            plt.plot(self.gamma_theory * rad, self.mu_theory, color='black', label='theory HD')
+            plt.scatter(self.gamma_pta * RAD, self.mu_pta, c='blue', linewidths=1, label='PTA')
+            plt.plot(self.gamma_mean * RAD, self.mu_mean, color='red', label='obs HD')
+            plt.plot(self.gamma_mean * RAD, self.mu_mean + self.mu_std, color='red', linestyle='--', label='obs Var[HD]')
+            plt.plot(self.gamma_mean * RAD, self.mu_mean - self.mu_std, color='red', linestyle='--')
+            plt.plot(self.gamma_theory * RAD, self.mu_theory, color='black', label='theory HD')
 
             plt.title("HD curve")
             plt.xlabel("$\\gamma$, deg")
@@ -389,24 +309,3 @@ class Telescope:
 
         else:
             print("There is no such plot function.")
-
-class Experiment(ABC):
-    def run(self):
-        data = self.load_data()
-        prepared = self.preprocess(data)
-        result = self.pipeline(prepared)
-        data = self.postprocess(result)
-        return data
-
-    @abstractmethod
-    def pipeline(self, data):
-        pass
-
-    def load_data(self):
-        return None
-
-    def preprocess(self, data):
-        return data
-
-    def postprocess(self, result):
-        return result
