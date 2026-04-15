@@ -1,19 +1,22 @@
 \section{Problem Statement}
 
 Consider the spherical coordinate system $(\phi, \theta, r)$, where $\phi$ is longitude, $\theta$ is colatitude and r is radius. Then the orthonormal basis in the cartesian coordinate system will look like:
+\begin{subequations}
 \begin{align}
     \hat{\Omega} &= \left(\sin \theta \cos \phi, \sin \theta \sin \phi, \cos \theta \right), \\
     \hat{n} &= (\cos \theta \cos \phi, \cos \theta \sin \phi, - \sin \theta), \\
     \hat{m} &= (\sin \phi, - \cos \phi, 0),
 \end{align}
+\end{subequations}
 where $(\hat{\Omega}, \hat{n}, \hat{m}) \equiv (\hat{r}, \hat{\theta}, -\hat{\phi})$. Since $\bar{r} = r \cdot \hat{r}$, and the point on the unit sphere has the value $r = 1$, we can describe the unit sphere with a single vector $\hat{\Omega} = \hat{r}$.
 
 We also know that gravitational waves have two polarization, which are called "plus" and "cross", and are described by the corresponding tensors:
+\begin{subequations}
 \begin{align}
     e^+_{\alpha \beta}(\hat{\Omega}) &= \hat{m}_{\alpha} \hat{m}_{\beta} - \hat{n}_{\alpha} \hat{n}_{\beta}, \\
-    e^{\times}_{\alpha \beta}(\hat{\Omega}) &= \hat{m}_{\alpha} \hat{n}_{\beta} - \hat{n}_{\alpha} \hat{m}_{\beta}
+    e^{\times}_{\alpha \beta}(\hat{\Omega}) &= \hat{m}_{\alpha} \hat{n}_{\beta} + \hat{n}_{\alpha} \hat{m}_{\beta}
 \end{align}
-
+\end{subequations}
 Then, frequency shift of pulsar radiation $z = \Delta \nu/\nu_0$ in Fourier space:
 \begin{equation}
     \tilde{z}(f, \hat{\Omega}) = \left( e^{- i 2 \pi f L (1 + \hat{\Omega} \cdot \hat{p})} - 1\right) h(f, \hat{\Omega}) F_{\hat{p}}(f, \hat{\Omega}),
@@ -49,8 +52,12 @@ And in our case, we assume that the power spectrum is Gaussian and looks like th
 \end{equation}
 where $\hat{\Omega}_0$ is the center of the source and $\sigma$ is the width of the Gaussian. Converting the numerator:
 $$
-(\hat{\Omega} - \hat{\Omega}_0)^2 = \hat{\Omega}^2 + \hat{\Omega}_0^2 - 2 \hat{\Omega} \cdot \hat{\Omega}_0 = 1 + 1 -  2 \hat{\Omega} \cdot \hat{\Omega}_0 = 2 (1 - \hat{\Omega} \cdot \hat{\Omega}_0),
+(\hat{\Omega} - \hat{\Omega}_0)^2 = \hat{\Omega}^2 + \hat{\Omega}_0^2 - 2 \hat{\Omega} \cdot \hat{\Omega}_0 = 1 + 1 -  2 \hat{\Omega} \cdot \hat{\Omega}_0
 $$
+$$
+(\hat{\Omega} - \hat{\Omega}_0)^2 = 2 (1 - \hat{\Omega} \cdot \hat{\Omega}_0),
+$$
+
 we have:
 $$
 \mathcal{P}(\hat{\Omega}) = \exp \left[ - \frac{2 (1 - \hat{\Omega} \cdot \hat{\Omega}_0)}{2 \sigma^2} \right],
