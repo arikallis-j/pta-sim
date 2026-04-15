@@ -8,9 +8,18 @@ def mu_0(gamma):
     mu = 1/3 - 1/6 * (1 - cos_gamma)/2 + (1 - cos_gamma)/2 * np.log((1 - cos_gamma)/2)
     return mu
 
+def K_12(Omega, p1, p2):
+    return 1/4 * (2 * (np.einsum('l,l->', p1, p2) - np.einsum('l,l->', Omega, p1) * np.einsum('l,l->', Omega, p2))**2 / ((1 + np.einsum('l,l->', Omega, p1)) * (1 + np.einsum('l,l->', Omega, p2))) - ((1 - np.einsum('l,l->', Omega, p1)) * (1 - np.einsum('l,l->', Omega, p2))) ) 
+
 # Distributions
 def isotropic(skymap, args=None):
     return np.ones(skymap.phi.shape)
+
+def stochastic(skymap, args=43):
+    seed_bg = args
+    rng_bg = np.random.default_rng(seed=seed_bg)
+    eta = (rng_bg.normal(size=skymap.npix) + 1j * rng_bg.normal(size=skymap.npix)) / np.sqrt(2)
+    return np.abs(eta)**2
 
 def delta_2d(skymap, args=(PI/2,0)):
     theta0, phi0 = args
@@ -18,6 +27,14 @@ def delta_2d(skymap, args=(PI/2,0)):
     delta = np.zeros(skymap.npix, dtype=float)
     delta[ipix] = 4*PI / skymap.dOmega
     return delta
+
+def gaussian(skymap, args=(PI/2,0,1)):
+    theta0, phi0, sigma = args
+    Omega_0 = hp.ang2vec(theta0, phi0)
+    delta_Omega = np.einsum('li,l->i', skymap.Omega, Omega_0)
+    kappa = 1 / sigma**2
+    gauss = kappa/(np.sinh(kappa)) * np.exp(kappa * delta_Omega)
+    return gauss
 
 def string_2d(skymap, args=(PI/2, 360)):
     theta0, lenght = args

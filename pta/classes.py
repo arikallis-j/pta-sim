@@ -309,3 +309,121 @@ class Telescope:
 
         else:
             print("There is no such plot function.")
+
+class IdealTelescope:
+    def __init__(self, skymap, timeline, pulsar_arr):
+        self.skymap = skymap
+        self.timeline = timeline
+        self.pulsar_arr = pulsar_arr
+
+    def observe(self, grav_wave):
+        p = self.pulsar_arr.pulsar_vec
+        lp = self.pulsar_arr.pulsar_dist
+        Np = self.pulsar_arr.n_pulsars
+        Ng = self.skymap.npix
+        _, P = grav_wave.generate_wave(self.timeline, self.skymap)
+        self.skymap.plot(P , title='Gravitational Wave Background')
+
+
+        i, j = np.arange(0, Np), np.arange(0, Np)
+        i, j = np.meshgrid(i, j, indexing='xy')
+        mask = i>j
+        i, j = i[mask], j[mask]
+
+        p1, p2 = p[i], p[j]
+        mu = np.zeros(i.shape)
+
+        def mu_calc(p1, p2):
+            beta1 = (1 + np.einsum('li,l->i', self.skymap.Omega, p1))
+            beta2 = (1 + np.einsum('li,l->i', self.skymap.Omega, p2))
+            F1 = 1/2 * np.einsum('lm,lmi->i',np.einsum('l,m->lm', p1, p1), self.skymap.e) / beta1
+            F2 = 1/2 * np.einsum('lm,lmi->i',np.einsum('l,m->lm', p2, p2), self.skymap.e) / beta2
+            K12 = np.real(F1 * np.conjugate(F2))
+            K12 = 1/4 * (2 * (np.einsum('l,l->', p1, p2) - np.einsum('li,l->i', self.skymap.Omega, p1) * np.einsum('li,l->i', self.skymap.Omega, p2))**2 / ((1 + np.einsum('li,l->i', self.skymap.Omega, p1)) * (1 + np.einsum('li,l->i', self.skymap.Omega, p2))) - ((1 - np.einsum('li,l->i', self.skymap.Omega, p1)) * (1 - np.einsum('li,l->i', self.skymap.Omega, p2)))) 
+            Gamma_12 = np.sum(K12 * P * self.skymap.dOmega) / (4 * PI)
+            
+            # Int_Gamma12 = 0
+            # for k in range(self.skymap.Omega.shape[1]):
+            #     Omega_k, P_k = self.skymap.Omega[:,k], P[k]
+            #     K12_k = K_12(Omega_k, p1, p2)
+            #     Int_Gamma12 += K12_k * P_k * self.skymap.dOmega
+            # Gamma_12 = Int_Gamma12 / (4 * PI)
+
+            # theta0, phi0 = PI/2,0
+            # Omega0 = np.array([-np.sin(theta0)*np.cos(phi0), 
+            #                    -np.sin(theta0)*np.sin(phi0), 
+            #                    -np.cos(theta0)])
+            # Gamma_12 = K_12(Omega0, p1, p2)
+
+            return Gamma_12
+        
+        for k in tqdm(range(i.shape[0])):
+            mu_k = mu_calc(p1[k], p2[k])
+            mu[k] = mu_k
+
+        gamma = np.arccos(np.einsum('kl,kl->k',p1,p2))
+        gamma_pta, mu_pta = gamma, mu
+
+        self.gamma_pta, self.mu_pta = gamma_pta, mu_pta
+        return gamma_pta, mu_pta
+    
+    def average(self, gamma, mu, n_average = 21):
+        dgamma = PI / n_average
+        gamma_mean = np.linspace(dgamma/2, PI - dgamma/2, n_average)
+
+        mu_m = np.zeros(n_average)
+        mu_m2 = np.zeros(n_average) 
+        N_m = np.zeros(n_average)
+
+        for k in tqdm(range(gamma.shape[0])):
+            Gamma_k, gamma_k = mu[k], gamma[k]
+            mask = (gamma_mean - dgamma <= gamma_k) & (gamma_k < gamma_mean + dgamma)
+            mu_m[mask] += Gamma_k
+            mu_m2[mask] += Gamma_k**2
+            N_m[mask] += 1
+
+        mu_mean = mu_m / N_m
+        mu_std = np.sqrt(mu_m2 / N_m - mu_mean**2) 
+        
+        self.gamma_mean, self.mu_mean, self.mu_std = gamma_mean, mu_mean, mu_std
+        return gamma_mean, mu_mean, mu_std
+    
+    def theory(self, n_theory = 1000):
+        gamma_theory = np.linspace(0 + EPS, PI, n_theory)
+        mu_theory = mu_0(gamma_theory)
+        self.gamma_theory, self.mu_theory = gamma_theory, mu_theory
+        return gamma_theory, mu_theory
+
+    def plot(self, key='hd', show=True, save=True):
+        if key == 'hd':
+            plt.grid(True)
+            plt.scatter(self.gamma_pta * RAD, self.mu_pta, c='blue', linewidths=1, label='PTA')
+            plt.plot(self.gamma_mean * RAD, self.mu_mean, color='red', label='obs HD')
+            plt.plot(self.gamma_theory * RAD, self.mu_theory, color='black', label='theory HD')
+
+            plt.title("HD curve")
+            plt.xlabel("$\\gamma$, deg")
+            plt.ylabel("$\\Gamma(\\gamma)$")
+            plt.legend()
+            if not os.path.exists('data'):
+                os.mkdir('data')
+            if save:
+                plt.savefig('data/HD.png')
+            if show:
+                plt.show()
+
+        elif key == 'var-hd':
+            plt.grid(True)
+            plt.plot(self.gamma_mean * 180/PI, self.mu_std, color='blue', label='obs Var[HD]')
+            plt.title("HD curve")
+            plt.xlabel("$\\gamma$, deg")
+            plt.ylabel("$\\Gamma(\\gamma)$")
+            plt.legend()
+            if not os.path.exists('data'):
+                os.mkdir('data')
+            plt.savefig('data/Var_HD.png')
+            if show:
+                plt.show()
+
+        else:
+            print("There is no such plot function.")
