@@ -99,7 +99,7 @@ $$\begin{equation}
 \Gamma^{(g)}(\hat{p}, \hat{q}) = \frac{3 e^{-\kappa}}{4\pi}\int_{S^2} d \hat{\Omega} \cdot \mathcal{K}(\hat{\Omega}, \hat{p}, \hat{q}) \cdot e^{\kappa \hat{\Omega} \cdot \hat{\Omega}_0}
 \end{equation}$$
 
-## Integral in Coordinates
+## 2. Integral in Coordinates
 
 Firstly, let's represent the integral kernel $\mathcal{K}$ in vector form:
 
@@ -199,6 +199,13 @@ $$\begin{align*}
     Q_{m} &= \sin \beta \sin (\phi - \gamma);
 \end{align*}$$
 
+and define scalar product between $\hat{p}$ and $\hat{q}$ as:
+$$\begin{equation}
+    \cos \xi = \sin \alpha \sin \beta \cos \gamma + \cos \alpha \cos \beta,
+\end{equation}$$
+
+where $\xi$ is the angle between $\hat{p}$ and $\hat{q}$.
+
 Also, let's highlight the dependence of the coefficients on $\phi$:
 
 $$\begin{align}
@@ -213,6 +220,90 @@ $$\begin{align}
     a &= \sin \alpha \sin \theta, b = \cos \alpha \cos \theta, \\
     c &= \sin \beta \sin \theta, d = \cos \beta \cos \theta, \\
     h &= \sin \alpha \cos \theta, s = \cos \alpha \sin \theta, \\
-    k &= \sin \alpha \cos \theta, t = \cos \alpha \sin \theta, \\
+    k &= \sin \beta \cos \theta, t = \cos \beta \sin \theta, \\
     f &= \sin \alpha , g = \sin \beta,
 \end{align}$$
+
+## 3. Calculation of Integrals
+
+All integrals are calculated first in longitude and then in latitude, and in all of them, after the first integration, we get an integral only in $\cos\theta$, and the integral can be replaced by an integral from $-1$ to $+1$ in $x$. Let's calculate the integral of I using these steps:
+
+$$\begin{equation*}
+I = \int_{S^2} d\hat{\Omega} \cdot \mathcal{K}_{I} \cdot e^{\kappa \hat{\Omega} \cdot \hat{\Omega}_0}
+\end{equation*}$$
+
+$$\begin{equation}
+I = \int_{0}^{\pi} \sin \theta \cdot d \theta \cdot e^{\kappa \cdot \cos \theta} \int_{0}^{2\pi} d \phi \cdot \mathcal{K}_{I}
+\end{equation}$$
+
+$$\begin{equation}
+I_{\phi} = \int_{0}^{2\pi} d \phi \cdot \mathcal{K}_{I}
+\end{equation}$$
+
+The result for $I_{\phi}$ is:
+
+$$\begin{equation}
+I_{\phi} = 2\pi \cdot \left[ (b-1)(d-1) + \frac{1}{2}\cdot ac \cos \gamma\right]
+\end{equation}$$
+
+and after highlighting the dependency on $\cos\theta$:
+
+$$\begin{equation}\begin{aligned}
+I_{\phi} = 2\pi \cdot \Bigl[\cos^2 \theta \cdot \left(\frac{3}{2}\cos \alpha \cos \beta - \frac{1}{2} \cos \xi \right) \\ - \cos \theta \cdot \left(\cos \alpha + \cos \beta \right)\\ + \left(1 + \frac{1}{2} \cos \xi  - \frac{1}{2} \cos \alpha \cos \beta \right) \Bigr]
+\end{aligned}\end{equation}$$
+
+Then we can rewrite the final integral as an integral in $x$:
+
+$$\begin{equation}\begin{aligned}
+I = \int_{0}^{\pi} (-1) \cdot d(\cos \theta) \cdot e^{\kappa \cdot \cos \theta} \cdot I_{\phi}(\cos \theta) \\ = \int_{-1}^{1} dx \cdot I_{\phi}(x) \cdot e^{\kappa x}.
+\end{aligned}\end{equation}$$
+
+As a result, the integral $I$ will be equal to:
+
+$$\begin{equation}\begin{aligned}
+I = 4 \pi \Bigl[ \frac{\sinh\kappa}{\kappa} + \frac{3(\kappa \cosh \kappa - \sinh \kappa)}{\kappa^3} \cdot \frac{\cos \xi}{3} \\ + \left(\frac{\sinh \kappa }{\kappa} - \frac{3(\kappa \cosh \kappa - \sinh \kappa)}{\kappa^3}\right) \cdot \cos \alpha \cos \beta  \\ - \frac{\kappa \cosh \kappa - \sinh \kappa}{\kappa^2} \cdot (\cos \alpha + \cos \beta) \Bigr]
+\end{aligned}\end{equation}$$
+
+Let's calculate the integral $J$ using the same algorithm:
+
+$$\begin{equation*}
+J = \int_{S^2} d\hat{\Omega} \cdot \mathcal{K}_{J} \cdot e^{\kappa \hat{\Omega} \cdot \hat{\Omega}_0}
+\end{equation*}$$
+
+$$\begin{equation}
+J = \int_{0}^{\pi} \sin \theta \cdot d \theta \cdot e^{\kappa \cdot \cos \theta} \int_{0}^{2\pi} d \phi \cdot \mathcal{K}_{J}
+\end{equation}$$
+
+$$\begin{equation}
+J_{\phi} = \int_{0}^{2\pi} d \phi \cdot \mathcal{K}_{J}
+\end{equation}$$
+
+The result for $J_{\phi}$ is:
+
+$$\begin{equation}\begin{aligned}
+J_{\phi} = 4\pi f^2 \cdot \Bigl[ \frac{(b+1) - \sqrt{(b+1)^2 - a^2}}{a^2} \cdot (d-1) \\ + \left(\frac{(b+1) - \sqrt{(b+1)^2 - a^2}}{a^2}\right)^2 \cdot \frac{ac \cos \gamma}{2} \Bigr]
+\end{aligned}\end{equation}$$
+
+and after highlighting the dependency on $\cos\theta$:
+
+$$\begin{equation}\begin{aligned}
+J_{\phi} = 4\pi \cdot \Bigl[ \frac{1 + \cos \alpha \cos \theta - |\cos \alpha + \cos \theta|}{1 - \cos^2 \theta} \cdot (\cos \beta \cos \theta - 1) \\ + \frac{\left(1 + \cos \alpha \cos \theta - |\cos \alpha + \cos \theta|\right)^2}{1 - \cos^2 \theta} \cdot \frac{\cos \xi - \cos \alpha \cos \beta}{2 (1 - \cos \alpha^2)}\Bigr]
+\end{aligned}\end{equation}$$
+
+Then we can rewrite the final integral as an integral in $x$:
+
+$$\begin{equation}\begin{aligned}
+J = \int_{0}^{\pi} (-1) \cdot d(\cos \theta) \cdot e^{\kappa \cdot \cos \theta} \cdot J_{\phi}(\cos \theta) \\ = \int_{-1}^{1} dx \cdot J_{\phi}(x) \cdot e^{\kappa x}
+\end{aligned}\end{equation}$$
+
+As a result, the integral $J$ will be equal to:
+
+$$\begin{equation}\begin{aligned}
+J = 4 \pi \Bigl[ \frac{(1-\cos \alpha) \cdot (1 + \cos \alpha + \cos \beta + \cos \xi)}{1 + \cos \alpha} \cdot \\  e^{-\kappa} \cdot \left(\text{Ei} [\kappa(1 - \cos \alpha)] - \text{Ei}[2\kappa] \right) \\ + \frac{(1+\cos \alpha) \cdot (1 - \cos \alpha - \cos \beta + \cos \xi)}{1 - \cos \alpha} \cdot \\ e^{\kappa} \cdot \left(\text{Ei} [- \kappa(1 + \cos \alpha)] - \text{Ei}[-2\kappa] \right) \\ + (1-\cos \alpha) \cdot \left(\cos \beta + \frac{1}{2}(\cos \alpha \cos \beta + \cos \xi)\right) \cdot \\ \left( \frac{\sinh \kappa}{\kappa} + \cos \alpha \cdot \frac{\cosh \kappa - \exp(-\kappa \cdot \cos \alpha)}{\kappa \cdot \cos \alpha} \right) \cdot \frac{1}{1 + \cos \alpha} \\ - (1+\cos \alpha) \cdot \left(\cos \beta - \frac{1}{2}(\cos \alpha \cos \beta + \cos \xi)\right) \cdot \\ \left( \frac{\sinh \kappa}{\kappa} - \cos \alpha \cdot \frac{\cosh \kappa - \exp(-\kappa \cdot \cos \alpha)}{\kappa \cdot \cos \alpha} \right) \cdot \frac{1}{1 - \cos \alpha} \Bigr]
+\end{aligned}\end{equation}$$
+
+And since the integral $K$ has the same structure, we can write the final equation for $K$ by simply replacing $\cos\alpha$ and $\cos\beta$ in the equation for the integral $J$:
+
+$$\begin{equation}\begin{aligned}
+K = 4 \pi \Bigl[ \frac{(1-\cos \beta) \cdot (1 + \cos \alpha + \cos \beta + \cos \xi)}{1 + \cos \beta} \cdot \\ e^{-\kappa} \cdot \left(\text{Ei} [\kappa(1 - \cos \beta)] - \text{Ei}[2\kappa] \right) \\ + \frac{(1+\cos \beta) \cdot (1 - \cos \alpha - \cos \beta + \cos \xi)}{1 - \cos \beta} \cdot \\ e^{\kappa} \cdot \left(\text{Ei} [- \kappa(1 + \cos \beta)] - \text{Ei}[-2\kappa] \right) \\ + (1-\cos \beta) \cdot \left(\cos \alpha + \frac{1}{2}(\cos \alpha \cos \beta + \cos \xi)\right) \cdot \\ \left( \frac{\sinh \kappa}{\kappa} + \cos \beta \cdot \frac{\cosh \kappa - \exp(-\kappa \cdot \cos \beta)}{\kappa \cdot \cos \beta} \right) \cdot \frac{1}{1 + \cos \beta}  \\ - (1+\cos \beta) \cdot \left(\cos \alpha - \frac{1}{2}(\cos \alpha \cos \beta + \cos \xi)\right) \cdot \\ \left( \frac{\sinh \kappa}{\kappa} - \cos \beta \cdot \frac{\cosh \kappa - \exp(-\kappa \cdot \cos \beta)}{\kappa \cdot \cos \beta} \right) \cdot \frac{1}{1 - \cos \beta} \Bigr]
+\end{aligned}\end{equation}$$
