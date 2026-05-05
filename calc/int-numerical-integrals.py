@@ -5,18 +5,19 @@ from tqdm import tqdm
 PI = np.pi
 
 class Calculator:
-    def __init__(self, N=10):
-        self.setup(N)
+    def __init__(self, N=10, rng =(0, 2*PI)):
+        self.setup(N, rng)
 
-    def setup(self,N):
+    def setup(self,N, rng = (0, 2*PI)):
+        self.a, self.b = rng
         self.N = N
-        self.phi = np.linspace(0, 2*PI, N, endpoint=False)
-        self.dphi = np.ones(N) * 2*PI / N 
+        self.x = np.linspace(self.a, self.b, N, endpoint=False)
+        self.dx = np.ones(N) * (self.b - self.a) / N 
     
     def true_int(self, integral, **params):
         return integral(**params)
     def est_int(self, func, **params):
-        return np.sum(self.dphi * func(self.phi, **params))
+        return np.sum(self.dx * func(self.x, **params))
     def check(self, func, integral, **params):
         Int_true = self.true_int(integral, **params)
         Int_est = self.est_int(func, **params)
@@ -48,6 +49,44 @@ class Calculator:
 
         return np.array(Int_true), np.array(Int_est)
 
+
+def h51(x, a, c, gamma):
+    A = np.cos(x) * np.cos(x - gamma) * np.cos(x) * np.cos(x - gamma)
+    B = ((a*np.cos(x) + 1)*(c*np.cos(x - gamma) + 1))
+    return A/B
+
+def H51(a, c, gamma):
+    p, q = np.cos(gamma), np.sin(gamma)
+    nu = a**2 * c**2
+    s = np.sqrt(1 - a**2)
+    q = np.sqrt(1 - c**2)
+
+    H_0 = 2*PI/(a**2 * c**2) * (
+        + 1 - (s + q)/(s*q - a*c*np.cos(gamma) + 1)
+        + (a*c*np.cos(gamma)) * (1/2 + 1/s * (s - 1)/a**2 + 1/q * (q - 1)/c**2)
+        + (a*c*np.cos(gamma)) * (1/s + 1/q)/(1 - a*c*p + s*q)  
+    )
+    return H_0
+
+def h52(x, a, c, gamma):
+    A = np.cos(x) * np.cos(x)
+    B = ((a*np.cos(x) + 1)*(c*np.cos(x - gamma) + 1))
+    return A/B
+    
+def H52(a, c, gamma):
+    p, q = np.cos(gamma), np.sin(gamma)
+    return 1/a**2 * (V(c, 1) * a*p - V(c, 0) + Z(a,c,gamma))
+
+def h53(x, a, c, gamma):
+    A = np.cos(x-gamma) * np.cos(x-gamma)
+    B = ((a*np.cos(x) + 1)*(c*np.cos(x - gamma) + 1))
+    return A/B
+    
+def H53(a, c, gamma):
+    p, q = np.cos(gamma), np.sin(gamma)
+    return 1/c**2 * (V(a, 1) * c*p - V(a, 0) + Z(a,c,gamma))
+
+
 def V(a, k):
     r = (-1 + np.sqrt(1 - a**2))/a
     return 2*PI/(np.sqrt(1 - a**2)) * r**np.abs(k)
@@ -62,180 +101,336 @@ def W(a, n, m):
             w+= (-1)**(n//2) / 2**(n+m) * (-1)**i * comb(n, i) * comb(m, j) * V(a, (n+m) - 2*(i+j))
     return w
 
-def g(x, a, c, gamma):
+def z(x, a, c, gamma):
     return  1/((1 + a*np.cos(x))*(1 + c*np.cos(x - gamma)))
 
-def f(x, a, c, gamma):
-    A = np.sin(x) * np.sin(x - gamma)
-    B = ((1 + a*np.cos(x))*(1 + c*np.cos(x - gamma)))
-    return A/B
-
-def f_red(x, a, c, gamma):
-    La = (a*np.cos(x) + 1)
-    Lc = (c*np.cos(x - gamma) + 1)
-    Norm = (A**2 * C**2 * np.sin(Gamma)**2)
-
-    P2 = ((a**2 + c**2) * np.cos(gamma) - a*c*(1+np.cos(gamma)**2))
-    P1a = (a*c*(1+np.cos(gamma)**2) - a**2*np.cos(gamma)) + \
-        a*c*np.cos(gamma) * a * (np.cos(x-gamma)) 
-    P1c = (a*c*(1+np.cos(gamma)**2) - C**2*np.cos(gamma)) + \
-        a*c*np.cos(gamma) * c * (np.cos(x))
-    P0 = - a*c*(1+np.cos(gamma)**2)
-
-    return 1/Norm * (P2/(La*Lc) + P1a/La + P1c/Lc + P0)
-
-def h1(x, a, b, c, d, gamma):
-    A = b*d*np.sin(x) * np.sin(x - gamma)
-    B = ((a*np.cos(x) + (b+1))*(c*np.cos(x - gamma) + (d+1)))
-    return A/B
-
-
-def z0(x, a, c, gamma):
-    return  1/((1 + a*np.cos(x))*(1 + c*np.cos(x - gamma)))
-
-def Z0(a, c, gamma):
+def Z(a, c, gamma):
     b = np.sqrt(1 - a**2)
     d = np.sqrt(1 - c**2)
     s = np.sqrt(1 - a * c * np.cos(gamma))
     return (2*PI) * (b+d)/(b*d*(s**2 + b*d))
-
-# def Z1(a, c, gamma):
-#     NL = ((a**2 + c**2) * np.cos(gamma) - a*c*(1+np.cos(gamma)**2)) * Z0(a, c, gamma)
-#     Ca = (a*c*(1+np.cos(gamma)**2) - a**2*np.cos(gamma)) * W(a, 0, 0)
-#     Cb = (a*c*(1+np.cos(gamma)**2) - c**2*np.cos(gamma)) * W(c, 0, 0)
-#     La = a*c*np.cos(gamma)**2 * (a * W(a, 0, 1))
-#     Lc = a*c*np.cos(gamma)**2 * (c * W(c, 0, 1))
-#     C = 2*PI * (-a*c*(1+np.cos(gamma)**2))
-#     return (NL + Ca + Cb + La + Lc + C)/(a**2 * c**2 * np.sin(gamma)**2)
-
-def Z1(a, c, gamma):
-    cos_g, sin_g = np.cos(gamma), np.sin(gamma)
-    b, d = np.sqrt(1 - a**2), np.sqrt(1 - c**2)
-    return 2*PI/(b*d - a*c*cos_g + 1) * (cos_g - (b-1)/a * (d-1)/c)
-
-# def func_h1(x, a, b, c, d, gamma):
-#     A = np.sin(x) * np.sin(x - gamma)
-#     B = ((a*np.cos(x) + (b+1))*(c*np.cos(x - gamma) + (d+1)))
-#     return A/B
-
-# def H1(a, b, c, d, gamma):
-#     s = np.sqrt((b+1)**2 - a**2)
-#     q = np.sqrt((d+1)**2 - c**2) 
-#     return 2*PI/(a*c) * (
-#         (q*(b+1) + s*(d+1))/(s*q - a*c*np.cos(gamma) + (b+1)*(d+1)) - 1
-#     )
 
 def func_j(x, a, b, c, d, gamma):
     return np.sin(x)**2 * (c*np.cos(x - gamma) + (d - 1))/ (a*np.cos(x) + (b+1))
 
 def J(a, b, c, d, gamma):
     x0 = ((b+1) - np.sqrt((b+1)**2 - a**2))/a**2
-
     return 2*PI * (x0 * (d - 1) - x0**2 * a*c*np.cos(gamma)/2)
 
-"""
-J0 = - a^3*c^3 * f*g * (2**p^5 + 2*p^3*q^2 + p*q^4)
-L0 = + a^3*c^3 * (-4*f*g*p^3*q^2 - 2*f*g*p*q^4 + h*k*p*q^4)
-P0 = a^2*c^3*k*p^3*q^2*s + a^2*c^3*k*p*q^4*s - 2*a^3*c^3*p^2*q^2*s*t - a^3*c^3*q^4*s*t - 4*a*c^3*f*g*p^5 - 6*a*c^3*f*g*p^3*q^2 + a*c^3*h*k*p^3*q^2 - 2*a*c^3*f*g*p*q^4 + a*c^3*h*k*p*q^4 - 2*a^3*c^2*k*p^2*q^2*s - a^3*c^2*k*q^4*s - 2*a^2*c^3*h*p^2*q^2*t - a^2*c^3*h*q^4*t + 6*a^2*c^2*f*g*p^4 + 6*a^2*c^2*f*g*p^2*q^2 - 2*a^2*c^2*h*k*p^2*q^2 + a^2*c^2*f*g*q^4 - a^2*c^2*h*k*q^4 + a^3*c^2*h*p*q^2*t - 4*a^3*c*f*g*p^3 - 2*a^3*c*f*g*p*q^2 + a^3*c*h*k*p*q^2
+def h1(x, a, c, gamma):
+    A = np.sin(x) * np.sin(x - gamma)
+    B = ((a*np.cos(x) + 1)*(c*np.cos(x - gamma) + 1))
+    return A/B
 
-K3u = a^4*c^3*f*g*(p^5 - 3*p^3*q^2)
-K2u = a^2*c^2 * (-a^2*c^1*k*p^3*q^2*s + a^2*c^1*k*p*q^4*s + 4*a^1*c^1*f*g*p^5 - 2*a^1*c^1*f*g*p^3*q^2 - a^1*c^1*h*k*p^3*q^2 - 2*a^1*c^1*f*g*p*q^4 + a^1*c^1*h*k*p*q^4 - a^2*f*g*p^4 + a^2*f*g*p^2*q^2)
-K1u = 3*a^4*c^3*f*g*p^3*q^2 - 2*a^3*c^3*k*p^3*q^2*s - a^3*c^3*k*p*q^4*s + a^4*c^3*p^2*q^2*s*t + 6*a^2*c^3*f*g*p^5 + 6*a^2*c^3*f*g*p^3*q^2 - 2*a^2*c^3*h*k*p^3*q^2 + a^2*c^3*f*g*p*q^4 - a^2*c^3*h*k*p*q^4 + a^4*c^2*k*p^2*q^2*s + a^3*c^3*h*p^2*q^2*t - 4*a^3*c^2*f*g*p^4 - 2*a^3*c^2*f*g*p^2*q^2 + a^3*c^2*h*k*p^2*q^2 + a^4*c*f*g*p^3
-K0u = -a^4*c^3*k*p*q^4*s + 4*a^3*c^3*f*g*p^3*q^2 + 2*a^3*c^3*f*g*p*q^4 - a^3*c^3*h*k*p*q^4 - a^4*c^2*f*g*p^2*q^2 - a^2*c^3*k*p^3*q^2*s - a^2*c^3*k*p*q^4*s + 2*a^3*c^3*p^2*q^2*s*t + a^3*c^3*q^4*s*t + 4*a*c^3*f*g*p^5 + 6*a*c^3*f*g*p^3*q^2 - a*c^3*h*k*p^3*q^2 + 2*a*c^3*f*g*p*q^4 - a*c^3*h*k*p*q^4 + 2*a^3*c^2*k*p^2*q^2*s + a^3*c^2*k*q^4*s + 2*a^2*c^3*h*p^2*q^2*t + a^2*c^3*h*q^4*t - a^4*c^2*p*q^2*s*t - 6*a^2*c^2*f*g*p^4 - 6*a^2*c^2*f*g*p^2*q^2 + 2*a^2*c^2*h*k*p^2*q^2 - a^2*c^2*f*g*q^4 + a^2*c^2*h*k*q^4 - a^4*c*k*p*q^2*s - a^3*c^2*h*p*q^2*t + 4*a^3*c*f*g*p^3 + 2*a^3*c*f*g*p*q^2 - a^3*c*h*k*p*q^2 - a^4*f*g*p^2
+def H1(a, c, gamma):
+    p = np.cos(gamma)
+    s = np.sqrt(1 - a**2)
+    q = np.sqrt(1 - c**2) 
+    return 2*PI/(a**2*c**2) * 1/(s*q - a*c*p + 1) * (
+        (a*c) * (a*c*p - (s-1)*(q-1))
+    )
 
-K3w = a^3*c^4*f*g*(p^9 - p^7*q^2 - 5*p^5*q^4 - 3*p^3*q^6)
-K2w = -a^2*c^4*f*g*p^8 - a^2*c^4*f*g*p^6*q^2 + a^2*c^4*f*g*p^4*q^4 + a^2*c^4*f*g*p^2*q^6 - a^3*c^4*h*p^5*q^2*t + a^3*c^4*h*p*q^6*t + 4*a^3*c^3*f*g*p^7 + 2*a^3*c^3*f*g*p^5*q^2 - a^3*c^3*h*k*p^5*q^2 - 4*a^3*c^3*f*g*p^3*q^4 - 2*a^3*c^3*f*g*p*q^6 + a^3*c^3*h*k*p*q^6
-K1w = 3*a^3*c^4*f*g*p^7*q^2 + 6*a^3*c^4*f*g*p^5*q^4 + 3*a^3*c^4*f*g*p^3*q^6 + a^3*c^4*p^4*q^2*s*t + a^3*c^4*p^2*q^4*s*t + a*c^4*f*g*p^7 + 2*a*c^4*f*g*p^5*q^2 + a*c^4*f*g*p^3*q^4 + a^3*c^3*k*p^4*q^2*s + a^3*c^3*k*p^2*q^4*s + a^2*c^4*h*p^4*q^2*t + a^2*c^4*h*p^2*q^4*t - 4*a^2*c^3*f*g*p^6 - 6*a^2*c^3*f*g*p^4*q^2 + a^2*c^3*h*k*p^4*q^2 - 2*a^2*c^3*f*g*p^2*q^4 + a^2*c^3*h*k*p^2*q^4 - 2*a^3*c^3*h*p^3*q^2*t - a^3*c^3*h*p*q^4*t + 6*a^3*c^2*f*g*p^5 + 6*a^3*c^2*f*g*p^3*q^2 - 2*a^3*c^2*h*k*p^3*q^2 + a^3*c^2*f*g*p*q^4 - a^3*c^2*h*k*p*q^4
-K0w = -a^2*c^4*f*g*p^6*q^2 - 2*a^2*c^4*f*g*p^4*q^4 - a^2*c^4*f*g*p^2*q^6 - a^3*c^4*h*p^3*q^4*t - a^3*c^4*h*p*q^6*t + 4*a^3*c^3*f*g*p^5*q^2 + 6*a^3*c^3*f*g*p^3*q^4 - a^3*c^3*h*k*p^3*q^4 + 2*a^3*c^3*f*g*p*q^6 - a^3*c^3*h*k*p*q^6 - a^2*c^4*p^3*q^2*s*t - a^2*c^4*p*q^4*s*t - c^4*f*g*p^6 - 2*c^4*f*g*p^4*q^2 - c^4*f*g*p^2*q^4 - a^2*c^3*k*p^3*q^2*s - a^2*c^3*k*p*q^4*s - a*c^4*h*p^3*q^2*t - a*c^4*h*p*q^4*t + 2*a^3*c^3*p^2*q^2*s*t + a^3*c^3*q^4*s*t + 4*a*c^3*f*g*p^5 + 6*a*c^3*f*g*p^3*q^2 - a*c^3*h*k*p^3*q^2 + 2*a*c^3*f*g*p*q^4 - a*c^3*h*k*p*q^4 + 2*a^3*c^2*k*p^2*q^2*s + a^3*c^2*k*q^4*s + 2*a^2*c^3*h*p^2*q^2*t + a^2*c^3*h*q^4*t - 6*a^2*c^2*f*g*p^4 - 6*a^2*c^2*f*g*p^2*q^2 + 2*a^2*c^2*h*k*p^2*q^2 - a^2*c^2*f*g*q^4 + a^2*c^2*h*k*q^4 - a^3*c^2*h*p*q^2*t + 4*a^3*c*f*g*p^3 + 2*a^3*c*f*g*p*q^2 - a^3*c*h*k*p*q^2
+def h2(x, a, c, gamma):
+    A = np.sin(x) * np.sin(x - gamma) * np.cos(x)
+    B = ((a*np.cos(x) + 1)*(c*np.cos(x - gamma) + 1))
+    return A/B
 
-Puw = a^2*c^4*p^3*q^2*s*t + a^2*c^4*p*q^4*s*t + c^4*f*g*p^6 + 2*c^4*f*g*p^4*q^2 + c^4*f*g*p^2*q^4 + a^2*c^3*k*p^3*q^2*s + a^2*c^3*k*p*q^4*s + a*c^4*h*p^3*q^2*t + a*c^4*h*p*q^4*t - 2*a^3*c^3*p^2*q^2*s*t - a^3*c^3*q^4*s*t - 4*a*c^3*f*g*p^5 - 6*a*c^3*f*g*p^3*q^2 + a*c^3*h*k*p^3*q^2 - 2*a*c^3*f*g*p*q^4 + a*c^3*h*k*p*q^4 - 2*a^3*c^2*k*p^2*q^2*s - a^3*c^2*k*q^4*s - 2*a^2*c^3*h*p^2*q^2*t - a^2*c^3*h*q^4*t + a^4*c^2*p*q^2*s*t + 6*a^2*c^2*f*g*p^4 + 6*a^2*c^2*f*g*p^2*q^2 - 2*a^2*c^2*h*k*p^2*q^2 + a^2*c^2*f*g*q^4 - a^2*c^2*h*k*q^4 + a^4*c*k*p*q^2*s + a^3*c^2*h*p*q^2*t - 4*a^3*c*f*g*p^3 - 2*a^3*c*f*g*p*q^2 + a^3*c*h*k*p*q^2 + a^4*f*g*p^2
-"""
+def H2(a, c, gamma):
+    p = np.cos(gamma)
+    s = np.sqrt(1 - a**2)
+    q = np.sqrt(1 - c**2)
+    return 2*PI/(a**2*c**2) *  1/(s*q - a*c*p+ 1) * (
+        - (c+a*p) * ((a*c*p) - (s-1)*(q-1))
+        + (c*s + a*p*q) * (a*c*p)
+    )
 
-def k_h(x, a, b, c, d, gamma, s, t, k, h, f, g):
-    P_o = a * np.cos(x) + b 
-    Q_o = c * np.cos(x - gamma) + d
-    P_n = h * np.cos(x) - s 
-    Q_n = k * np.cos(x - gamma) - t
-    P_m = f * np.sin(x)
-    Q_m = g * np.sin(x - gamma)
-    return 4*P_m*Q_m*(P_n*Q_n + P_m*Q_m)/((1+P_o)*(1+Q_o))
-    
+def h3(x, a, c, gamma):
+    A = np.sin(x) * np.sin(x - gamma) * np.cos(x - gamma)
+    B = ((a*np.cos(x) + 1)*(c*np.cos(x - gamma) + 1))
+    return A/B
+
+def H3(a, c, gamma):
+    p = np.cos(gamma)
+    s = np.sqrt(1 - a**2)
+    q = np.sqrt(1 - c**2)
+    return 2*PI/(a**2*c**2) *  1/(s*q - a*c*p+ 1) * (
+        - (a+c*p) * ((a*c*p) - (s-1)*(q-1))
+        + (a*q + c*p*s) * (a*c*p)
+    )
+
+def h4(x, a, c, gamma):
+    A = np.sin(x) * np.sin(x - gamma) * np.cos(x) * np.cos(x - gamma)
+    B = ((a*np.cos(x) + 1)*(c*np.cos(x - gamma) + 1))
+    return A/B
+
+def H4(a, c, gamma):
+    p = np.cos(gamma)
+    s = np.sqrt(1 - a**2)
+    q = np.sqrt(1 - c**2)
+    return 2*PI/(a**2*c**2) * 1/(s*q - a*c*p + 1) * (
+        + (1 - p/(2*a*c) * (s-1)*(q-1) * ((s-1)*(q-1)-4)) * (a*c*p - (s-1)*(q-1)) 
+        + (s+q) * (p/(2*a*c) * (s-1)*(q-1) * ((s-1)*(q-1)-4))
+    )
+
+def h5(x, a, c, gamma):
+    A = np.sin(x) * np.sin(x - gamma) * np.sin(x) * np.sin(x - gamma)
+    B = ((a*np.cos(x) + 1)*(c*np.cos(x - gamma) + 1))
+    return A/B
+
+def H5(a, c, gamma):
+    p = np.cos(gamma)
+    s = np.sqrt(1 - a**2)
+    q = np.sqrt(1 - c**2)
+    return 2*PI/(a**2*c**2) * 1/(s*q - a*c*p + 1) * (
+        + (- 1 + (s+q) - p/(2*a*c) * (s-1)*(q-1) * ((s-1)*(q-1) - 4*s*q)) * (a*c*p - (s-1)*(q-1)) 
+        + (s+q) * ((s-1)*(q-1) + p/(2*a*c) * (s-1)*(q-1) * ((s-1)*(q-1) - 4*s*q))
+    )
+
+
+def h0(x, a, c, gamma, s, t, k, h, f, g):
+    P_o = a * np.cos(phi) + 1
+    Q_o = c * np.cos(phi - gamma) + 1
+    P_n = h * np.cos(phi) - s
+    Q_n = k * np.cos(phi - gamma) - t
+    P_m = f * np.sin(phi)
+    Q_m = g * np.sin(phi - gamma)
+    return 4 * P_m*Q_m * (P_m*Q_m + P_n*Q_n) / (P_o * Q_o)
+
 
 def H0(a, c, gamma, s, t, k, h, f, g):
-    p, q = np.cos(gamma), np.sin(gamma)
-    nu = a**4 * c**4 * q**4
+    p = np.cos(gamma)
+    a1 = np.sqrt(1 - a**2)
+    c1 = np.sqrt(1 - c**2)
+    H_0 = f*g*4*PI/(a**3*c**3) * (
+        + p * (a1-1)*(c1-1) * ((h*k + f*g) * (a1-1)*(c1-1) - 4*(h*k + f*g*a1*c1))
+        + 2 * (a*c)/(a1*c1 - a*c*p + 1) * (
+            + (a*c*p - (a1-1)*(c1-1)) * ((s*t*a*c) + (h*k - f*g) + t*h*(c+a*p) + s*k*(a + c*p))
+            - (a*c*p) * (t*h*(c*a1 + a*c1*p) + s*k*(a*c1 + c*a1*p) - f*g*(a1 + c1))
+        )
+    )
+    return H_0
 
-    Kc =  (a**3 * c**3) * (q**4) * (h*k*p)/2 \
-        + (a**3 * c**3) * (q**4 - 2*q**2) * (s*t) \
-        + (a**3 * c**3) * (q**4 - 2*q**2 - 2) * (f*g*p)/2 \
-        + (a**2 * c**2) * (q**4 - 2*q**2) * h*k \
-        + (a**2 * c**2) * (q**4 - 6*q**2 + 6) * f*g \
-        + (a**2 * c**2) * (a*p**3 + c) * (k*s*p - h*t) \
-        + (a**2 * c**2) * (c*p**3 + a) * (h*t*p - k*s) \
-        + (a**2 + c**2) * (a*c) * (q**2) * h*k*p \
-        + (a**2 + c**2) * (a*c) * (q**2 - 2) * 2*f*g*p
+def h_func(phi, theta, alpha, beta, gamma):
+    a = np.sin(alpha) * np.sin(theta)
+    b = np.cos(alpha) * np.cos(theta)
+    c = np.sin(beta) * np.sin(theta)
+    d = np.cos(beta) * np.cos(theta)
+    h = np.sin(alpha) * np.cos(theta)
+    s = np.cos(alpha) * np.sin(theta)
+    k = np.sin(beta) * np.cos(theta)
+    t = np.cos(beta) * np.sin(theta)
+    f = np.sin(alpha)
+    g = np.sin(beta)
+
+    P_o = a * np.cos(phi) + b
+    Q_o = c * np.cos(phi - gamma) + d
+    P_n = h * np.cos(phi) - s
+    Q_n = k * np.cos(phi - gamma) - t
+    P_m = f * np.sin(phi)
+    Q_m = g * np.sin(phi - gamma)
+
+    return 4 * P_m*Q_m * (P_m*Q_m + P_n*Q_n)/((1 + P_o) * (1 + Q_o))
+
+
+def h_func_int(theta, alpha, beta, gamma, N=1000000):
+    phi = np.linspace(0, 2*PI, N, endpoint=False)
+    dphi = np.ones(N) * 2*PI/ N 
+    return np.sum(dphi * h_func(phi, theta, alpha, beta, gamma))
+
+def h_func_int_int(alpha, beta, gamma, kappa, N=1000000):
+    theta = np.linspace(0, PI, N, endpoint=False)
+    dtheta = np.ones(N) * PI/ N 
+    kernel = np.sin(theta) * np.exp(kappa*np.cos(theta)) * h_func_int(theta, alpha, beta, gamma)
+    return np.sum(dtheta * kernel)
+
+
+def H_int(theta, alpha, beta, gamma):
+    a = np.cos(alpha)
+    b = np.cos(beta)
+    c = np.sin(alpha)*np.sin(beta)*np.cos(gamma) + np.cos(alpha)*np.cos(beta)
+    x = np.cos(theta)
+
+    H_0 = + 8*PI * (a*b - c) * (
+        +  1/2
+        +  ((a*x+1)-np.abs(a+x))/(x**2-1) * 1/(1-a**2)
+        +  ((b*x+1)-np.abs(b+x))/(x**2-1) * 1/(1-b**2)
+        + (1-c) * (
+            1 + (np.abs(a+x) - (a*x+1))*(np.abs(b+x) - (b*x+1))/((x**2-1)*(c - a*b))
+        ) / (np.abs(a+x)*np.abs(b+x) + (a*x+1)*(b*x+1) + (x**2-1)*(c - a*b))
+    )   
+
+    return  H_0
+
+from scipy.special import expi 
+
+def hh_func(x, alpha, beta, gamma, kappa, eps=1e-15):
+    a, b = np.cos(alpha), np.cos(beta)
+    c = np.cos(alpha) * np.cos(beta) + np.sin(alpha) * np.sin(beta) * np.cos(gamma)
+    k = kappa
+
+    x = np.where(np.abs(x) < eps, eps, x)
+    x = np.where(np.abs(x+1) < eps, -1 + eps, x)
+    x = np.where(np.abs(x-1) < eps, +1 - eps, x)
+
+    H_0 = + 8*PI * (a*b - c) * (
+        +  1/2
+        +  ((a*x+1)-np.abs(a+x))/(x**2-1) * 1/(1-a**2)
+        +  ((b*x+1)-np.abs(b+x))/(x**2-1) * 1/(1-b**2)
+        + (1-c) * (
+            1 + (np.abs(a+x) - (a*x+1))*(np.abs(b+x) - (b*x+1))/((x**2-1)*(c - a*b))
+        ) / (np.abs(a+x)*np.abs(b+x) + (a*x+1)*(b*x+1) + (x**2-1)*(c - a*b))
+    )   
+
+    return (H_0) * np.exp(kappa*x)
+
+
+def Hh_int(alpha, beta, gamma, kappa):
+    a, b = np.cos(alpha), np.cos(beta)
+    c = np.cos(alpha) * np.cos(beta) + np.sin(alpha) * np.sin(beta) * np.cos(gamma)
+    k = kappa
+
+    t = (a + b)/(1+c)
+    s = np.sqrt(1 + 2*a*b*c - c**2 - a**2 - b**2)/(1+c)
+    r = (t + 1j*s)
+    H_0 = (
+        + 2*(a*b - c)*np.sinh(k)/k
+        + 2*(a*b - c)/(1+a) * np.exp(-k) * (expi(+k*(1-a)) - expi(+2*k)) 
+        + 2*(a*b - c)/(1+b) * np.exp(-k) * (expi(+k*(1-b)) - expi(+2*k)) 
+        + 2*(a*b - c)/(1-b) * np.exp(+k) * (expi(-k*(1+b)) - expi(-2*k))
+        + 2*(a*b - c)/(1-a) * np.exp(+k) * (expi(-k*(1+a)) - expi(-2*k))  
+        - (1-c) * np.exp(-k) * (expi(+k*(1-a)) - expi(+2*k)) 
+        - (1-c) * np.exp(-k) * (expi(+k*(1-b)) - expi(+2*k)) 
+        - (1-c) * np.exp(+k) * (expi(-k*(1+a)) - expi(-2*k))
+        - (1-c) * np.exp(+k) * (expi(-k*(1+b)) - expi(-2*k))
+        - (a-b) * np.exp(+k) * (expi(-k*(1+a)) - expi(-k*(1+b)))
+        - (a-b) * np.exp(-k) * (expi(+k*(1-b)) - expi(+k*(1-a)))
+        - (1-c) * 2 * np.real(np.exp(-k*r) * (expi(+k*(r-1)) + expi(+k*(r+1))))
+        + (1-c) * 2 * np.real(np.exp(-k*r) * (expi(+k*(r-a)) + expi(+k*(r-b))))
+    )
+
+    return  4*PI  * H_0
+
+def Int_est(alpha, beta, gamma, kappa, nside = 8):
+    npix = hp.nside2npix(nside)
+    theta, phi = hp.pix2ang(nside, np.arange(npix))
+    dOmega = hp.nside2pixarea(nside)
+
+    a = np.sin(alpha) * np.sin(theta)
+    b = np.cos(alpha) * np.cos(theta)
+    c = np.sin(beta) * np.sin(theta)
+    d = np.cos(beta) * np.cos(theta)
+    h = np.sin(alpha) * np.cos(theta)
+    s = np.cos(alpha) * np.sin(theta)
+    k = np.sin(beta) * np.cos(theta)
+    t = np.cos(beta) * np.sin(theta)
+    f = np.sin(alpha)
+    g = np.sin(beta)
+
+    P_o = a * np.cos(phi) + b
+    Q_o = c * np.cos(phi - gamma) + d
+    P_n = h * np.cos(phi) - s
+    Q_n = k * np.cos(phi - gamma) - t
+    P_m = f * np.sin(phi)
+    Q_m = g * np.sin(phi - gamma)
+
+
+    K_I = (P_o - 1)*(Q_o - 1)
+    K_J = 2 * P_m**2 * (Q_o - 1)/(P_o + 1)
+    K_K = 2 * Q_m**2 * (P_o - 1)/(Q_o + 1)
+    K_H = 4 * P_m*Q_m * (P_m*Q_m + P_n*Q_n)/((1 + P_o) * (1 + Q_o))
+    K = K_I + K_J + K_K + K_H
+    F = K * np.exp(kappa * np.cos(theta))
+    return 1/(4*np.pi) * np.sum(dOmega * F)
+
+def Int_theory(alpha, beta, gamma, kappa):
+    a = np.cos(alpha) # (p·Ω)
+    b = np.cos(beta) # (q·Ω)
+    c = np.cos(alpha) * np.cos(beta) + np.sin(alpha) * np.sin(beta) * np.cos(gamma)  # (p·q)
+    V = np.sqrt(1 + 2*a*b*c - c**2 - a**2 - b**2) # |(p×q)·Ω|
+    k = kappa
+    t = (a + b)/(1 + c)
+    s = V/(1 + c) 
+
+    def expi2(x, s):
+        z = x + 1j*s
+        return 2 * np.real(np.exp(-z) * expi(z))
+
+    shc = np.sinh(k)/k
+    chc_2 = (k*np.cosh(k) - np.sinh(k))/k**2
+    chc_3 = 3*(k*np.cosh(k) - np.sinh(k))/k**3
+    chc_a = (np.cosh(k) - np.exp(-k*a))/(a*k)
+    chc_b = (np.cosh(k) - np.exp(-k*b))/(b*k)
         
-    K3 = + a**3*c**3 * p**3 * (1 - 4*q**2)
-    K2 = - a**2*c**2 * p**1 * (1 - 2*q**2) 
-    K1 = + a**1*c**1 * p**1 
+    return (
+        + 1/3 * (3*shc + chc_3)
+        + 1 * (shc - chc_3) * (a*b)
+        - (a+b) * (chc_2)
 
-    K0u = -a**4*c**3*k*p*q**4*s + 4*a**3*c**3*f*g*p**3*q**2 + 2*a**3*c**3*f*g*p*q**4 - a**3*c**3*h*k*p*q**4 - a**4*c**2*f*g*p**2*q**2 - a**2*c**3*k*p**3*q**2*s - a**2*c**3*k*p*q**4*s + 2*a**3*c**3*p**2*q**2*s*t + a**3*c**3*q**4*s*t + 4*a*c**3*f*g*p**5 + 6*a*c**3*f*g*p**3*q**2 - a*c**3*h*k*p**3*q**2 + 2*a*c**3*f*g*p*q**4 - a*c**3*h*k*p*q**4 + 2*a**3*c**2*k*p**2*q**2*s + a**3*c**2*k*q**4*s + 2*a**2*c**3*h*p**2*q**2*t + a**2*c**3*h*q**4*t - a**4*c**2*p*q**2*s*t - 6*a**2*c**2*f*g*p**4 - 6*a**2*c**2*f*g*p**2*q**2 + 2*a**2*c**2*h*k*p**2*q**2 - a**2*c**2*f*g*q**4 + a**2*c**2*h*k*q**4 - a**4*c*k*p*q**2*s - a**3*c**2*h*p*q**2*t + 4*a**3*c*f*g*p**3 + 2*a**3*c*f*g*p*q**2 - a**3*c*h*k*p*q**2 - a**4*f*g*p**2
-    K0w = -a**2*c**4*f*g*p**6*q**2 - 2*a**2*c**4*f*g*p**4*q**4 - a**2*c**4*f*g*p**2*q**6 - a**3*c**4*h*p**3*q**4*t - a**3*c**4*h*p*q**6*t + 4*a**3*c**3*f*g*p**5*q**2 + 6*a**3*c**3*f*g*p**3*q**4 - a**3*c**3*h*k*p**3*q**4 + 2*a**3*c**3*f*g*p*q**6 - a**3*c**3*h*k*p*q**6 - a**2*c**4*p**3*q**2*s*t - a**2*c**4*p*q**4*s*t - c**4*f*g*p**6 - 2*c**4*f*g*p**4*q**2 - c**4*f*g*p**2*q**4 - a**2*c**3*k*p**3*q**2*s - a**2*c**3*k*p*q**4*s - a*c**4*h*p**3*q**2*t - a*c**4*h*p*q**4*t + 2*a**3*c**3*p**2*q**2*s*t + a**3*c**3*q**4*s*t + 4*a*c**3*f*g*p**5 + 6*a*c**3*f*g*p**3*q**2 - a*c**3*h*k*p**3*q**2 + 2*a*c**3*f*g*p*q**4 - a*c**3*h*k*p*q**4 + 2*a**3*c**2*k*p**2*q**2*s + a**3*c**2*k*q**4*s + 2*a**2*c**3*h*p**2*q**2*t + a**2*c**3*h*q**4*t - 6*a**2*c**2*f*g*p**4 - 6*a**2*c**2*f*g*p**2*q**2 + 2*a**2*c**2*h*k*p**2*q**2 - a**2*c**2*f*g*q**4 + a**2*c**2*h*k*q**4 - a**3*c**2*h*p*q**2*t + 4*a**3*c*f*g*p**3 + 2*a**3*c*f*g*p*q**2 - a**3*c*h*k*p*q**2
+        + 2 * (chc_a - shc) * (a*b - a**2)/(1 - a**2)
+        + 2 * (chc_b - shc) * (a*b - b**2)/(1 - b**2)
     
-    Kuw = a**2*c**4*p**3*q**2*s*t + a**2*c**4*p*q**4*s*t + c**4*f*g*p**6 + 2*c**4*f*g*p**4*q**2 + c**4*f*g*p**2*q**4 + a**2*c**3*k*p**3*q**2*s + a**2*c**3*k*p*q**4*s + a*c**4*h*p**3*q**2*t + a*c**4*h*p*q**4*t - 2*a**3*c**3*p**2*q**2*s*t - a**3*c**3*q**4*s*t - 4*a*c**3*f*g*p**5 - 6*a*c**3*f*g*p**3*q**2 + a*c**3*h*k*p**3*q**2 - 2*a*c**3*f*g*p*q**4 + a*c**3*h*k*p*q**4 - 2*a**3*c**2*k*p**2*q**2*s - a**3*c**2*k*q**4*s - 2*a**2*c**3*h*p**2*q**2*t - a**2*c**3*h*q**4*t + a**4*c**2*p*q**2*s*t + 6*a**2*c**2*f*g*p**4 + 6*a**2*c**2*f*g*p**2*q**2 - 2*a**2*c**2*h*k*p**2*q**2 + a**2*c**2*f*g*q**4 - a**2*c**2*h*k*q**4 + a**4*c*k*p*q**2*s + a**3*c**2*h*p*q**2*t - 4*a**3*c*f*g*p**3 - 2*a**3*c*f*g*p*q**2 + a**3*c*h*k*p*q**2 + a**4*f*g*p**2
-    
-    H_c = 1/nu * Kc * (2*PI)
+        + (1-c) * (
+            + np.exp(-k*a) * expi2(k*(t-a),k*s) 
+            + np.exp(-k*b) * expi2(k*(t-b),k*s)
+            - np.exp(+k) * expi2(k*(t+1),k*s) 
+            - np.exp(-k) * expi2(k*(t-1),k*s) 
 
-    H_3 = 1/nu * K3 * (
-        (f*g) * (a*W(a, 0, 3) + c*W(c, 0, 3))
+            - 1/3 * (chc_3) 
+            + 2 * (chc_a - shc) * a**2/(1 - a**2)
+            + 2 * (chc_b - shc) * b**2/(1 - b**2)
+        )
+        
     )
-
-    H_2 = 1/nu * K2 * (
-        + ((a**2) * W(a, 0, 2) + (c**2) * W(c, 0, 2)) * (f*g)*p \
-        + (a*c) * ((k*s)*a*W(a, 0, 2) + (h*t)*c*W(c, 0, 2)) * q**2\
-        + (a*c) * (W(a, 0, 2) + W(c, 0, 2)) * ((h*k)*q**2 + (2*f*g)*(q**2 - 2))\
-    )
-
-    H_1 = 1/nu * K1 * (
-        + (a**3*W(a, 0, 1) + c**3*W(c, 0, 1)) * p**2 * (f*g)
-        + (a*c) * ((k*s)*a**2*W(a, 0, 1) + (h*t)*c**2*W(c, 0, 1)) * p*q**2 
-        + (a**2*c**2) * (a*W(a, 0, 1) + c*W(c, 0, 1)) * p*q**2 * (3*f*g*p + s*t)
-        + (a*c) * (a*W(a, 0, 1) + c*W(c, 0, 1)) * p * ((h*k)*q**2 + (2*f*g)*(q**2 - 2))
-        + (a*c) * (c*W(a, 0, 1) + a*W(c, 0, 1)) * ((q**4 - 6*q**2 + 6)*(f*g) + (q**4 - 2*q**2)*(h*k)) 
-        + (a**2*c**2) * (((h*t)*p + (k*s)*(q**2 - 2))*W(a, 0, 1) + ((k*s)*p + (h*t)*(q**2 - 2))*W(c, 0, 1)) * q**2
-    )
-
-    H_0 = 1/nu * (
-        K0u * W(a, 0, 0) + K0w * W(c, 0, 0)
-    )
-
-    H_uw = 1/nu * Kuw * Z0(a, c, gamma)
-    
-    return  (H_c + H_3 + H_2 + H_1 + H_0 + H_uw)
-
-def H3(a, b, c, d, gamma, s, t, k, h, f, g):
-    return 4*f*g*H0(a/(b+1), c/(d+1), gamma, s, t, k, h, f, g)/((b+1)*(d+1))
-    
+# s_a = np.sqrt(1 - a**2)
+# s_c = np.sqrt(1 - c**2)
+# s_g = np.sqrt(1 - a*c*p)
+# r_a = (s_a-1)/a
+# r_c = (s_c-1)/c
+# V0_a = 2*PI/s_a
+# V0_c = 2*PI/s_c
+# V1_a = 2*PI/s_a * r_a
+# V1_c = 2*PI/s_c * r_c
+# V2_a = 2*PI/s_a * r_a**2
+# V2_c = 2*PI/s_c * r_c**2
+# Z_ac = (2*PI) * (s_a+s_c)/(s_a*s_c*(s_g**2 + s_a*s_c))
 
 
 N = 1000000
 calc = Calculator(N)
 
 M = calc.N
-Gamma = 2*PI * np.random.random(M)
 Theta = PI * np.random.random(M)
 Alpha = PI * np.random.random(M)
 Beta = PI * np.random.random(M)
-A = np.sin(Alpha) * np.sin(Theta)
-B = np.cos(Alpha) * np.cos(Theta)
-C = np.sin(Beta) * np.sin(Theta)
-D = np.cos(Beta) * np.cos(Theta)
-H = np.sin(Alpha) * np.cos(Theta)
-S = np.cos(Alpha) * np.sin(Theta)
-K = np.sin(Beta) * np.cos(Theta)
-T = np.cos(Beta) * np.sin(Theta)
-F = np.sin(Alpha)
-G = np.sin(Beta)
+Gamma = 2 * PI * np.random.random(M)
+# Xi = PI * np.random.random(M)
+Xi = np.arccos(np.cos(Alpha)*np.cos(Beta) + np.sin(Alpha)*np.sin(Beta)*np.cos(Gamma))
+Kappa = 2*np.random.random(M)
+A = np.cos(Alpha)
+B = np.cos(Beta)
+C = np.cos(Xi)
+K = Kappa
+
+
+# import healpy as hp
+
+# NSIDE = 32
+# print(
+#     "Approximate resolution at NSIDE {} is {:.2} deg".format(
+#         NSIDE, hp.nside2resol(NSIDE, arcmin=True) / 60
+#     )
+# )
+
+# A = np.sin(Alpha) * np.sin(Theta)
+# B = np.cos(Alpha) * np.cos(Theta)
+# C = np.sin(Beta) * np.sin(Theta)
+# D = np.cos(Beta) * np.cos(Theta)
+# H = np.sin(Alpha) * np.cos(Theta)
+# S = np.cos(Alpha) * np.sin(Theta)
+# K = np.sin(Beta) * np.cos(Theta)
+# T = np.cos(Beta) * np.sin(Theta)
+# F = np.sin(Alpha)
+# G = np.sin(Beta)
 
 # A = np.random.random(M)
 # C = np.random.random(M)
@@ -249,13 +444,15 @@ G = np.sin(Beta)
 # G = np.random.random(M)
 
 
-phi = calc.phi
+# phi = calc.x
 
 # delta_expr = (f(phi, A, C, Gamma) - f_red(phi, A, C, Gamma))
 # print(delta_expr[delta_expr>10.0**(-8)])
 
-Int_true, Int_est = calc.test_acc(k_h, H3, log_eps=-8, a=A, b=B, c=C, d=D, gamma=Gamma, s=S, t=T, k=K, h=H, f=F, g=G)
+# Int_true, Int_est = calc.test_acc(h_func, h_func_int, log_eps=-8, alpha=Alpha, beta=Beta, gamma=Gamma, theta=Theta) 
 
+calc.setup(N, rng=(-1,1))
+Int_true, Int_est = calc.test_acc(hh_func, Hh_int, log_eps=-8, alpha=Alpha, beta=Beta, gamma=Gamma, kappa=Kappa) 
 
 # plt.scatter(Gamma[:10], Int_true)
 # plt.scatter(Gamma[:10], Int_est)

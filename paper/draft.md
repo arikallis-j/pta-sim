@@ -307,3 +307,33 @@ And since the integral $K$ has the same structure, we can write the final equati
 $$\begin{equation}\begin{aligned}
 K = 4 \pi \Bigl[ \frac{(1-\cos \beta) \cdot (1 + \cos \alpha + \cos \beta + \cos \xi)}{1 + \cos \beta} \cdot \\ e^{-\kappa} \cdot \left(\text{Ei} [\kappa(1 - \cos \beta)] - \text{Ei}[2\kappa] \right) \\ + \frac{(1+\cos \beta) \cdot (1 - \cos \alpha - \cos \beta + \cos \xi)}{1 - \cos \beta} \cdot \\ e^{\kappa} \cdot \left(\text{Ei} [- \kappa(1 + \cos \beta)] - \text{Ei}[-2\kappa] \right) \\ + (1-\cos \beta) \cdot \left(\cos \alpha + \frac{1}{2}(\cos \alpha \cos \beta + \cos \xi)\right) \cdot \\ \left( \frac{\sinh \kappa}{\kappa} + \cos \beta \cdot \frac{\cosh \kappa - \exp(-\kappa \cdot \cos \beta)}{\kappa \cdot \cos \beta} \right) \cdot \frac{1}{1 + \cos \beta}  \\ - (1+\cos \beta) \cdot \left(\cos \alpha - \frac{1}{2}(\cos \alpha \cos \beta + \cos \xi)\right) \cdot \\ \left( \frac{\sinh \kappa}{\kappa} - \cos \beta \cdot \frac{\cosh \kappa - \exp(-\kappa \cdot \cos \beta)}{\kappa \cdot \cos \beta} \right) \cdot \frac{1}{1 - \cos \beta} \Bigr]
 \end{aligned}\end{equation}$$
+
+And finally, let's calculate the integral $H$:
+
+$$\begin{equation*}
+H = \int_{S^2} d\hat{\Omega} \cdot \mathcal{K}_{H} \cdot e^{\kappa \hat{\Omega} \cdot \hat{\Omega}_0}
+\end{equation*}$$
+
+$$\begin{equation}
+H = \int_{0}^{\pi} \sin \theta \cdot d \theta \cdot e^{\kappa \cdot \cos \theta} \int_{0}^{2\pi} d \phi \cdot \mathcal{K}_{H}
+\end{equation}$$
+
+$$\begin{equation}
+H_{\phi} = \int_{0}^{2\pi} d \phi \cdot \mathcal{K}_{H}
+\end{equation}$$
+
+The result for $H_{\phi}$ is:
+
+$$\begin{equation*}\begin{aligned}
+H_{\phi} = 8\pi fg \cdot \Bigl[
+\frac{ac \cos \gamma}{2} \cdot \left(\frac{(b+1)-\sqrt{(b+1)^2 - a^2}}{a^2} \cdot \frac{(d+1)-\sqrt{(d+1)^2 - c^2}}{c^2}\right) \cdot \left((hk + fg)\cdot \left(\frac{(b+1)-\sqrt{(b+1)^2 - a^2}}{a^2} \cdot \frac{(d+1)-\sqrt{(d+1)^2 - c^2}}{c^2}\right) - 4hk \frac{(b+1)(d+1)}{a^2c^2} - 4 fg \frac{\sqrt{(b+1)^2 - a^2}\sqrt{(d+1)^2 - c^2}}{a^2c^2} \right) \\ + \frac{ac\cos\gamma - ((b+1)-\sqrt{(b+1)^2 - a^2})((d+1)-\sqrt{(d+1)^2 - c^2})}{\sqrt{(b+1)^2 - a^2}\sqrt{(d+1)^2 - c^2} - ac\cos \gamma + (b+1)(d+1)} \left(th \frac{c(b+1)+a(d+1) \cos \gamma}{a^2c^2} + sk \frac{a(d+1)+ c(b+1)\cos \gamma}{a^2c^2} + (hk - fg)\cdot\frac{(b+1)(d+1)}{a^2c^2} + st \frac{1}{ac}\right) \\ - \frac{ac\cos\gamma}{\sqrt{(b+1)^2 - a^2}\sqrt{(d+1)^2 - c^2} - ac\cos \gamma + (b+1)(d+1)} \left(th \frac{c\sqrt{(b+1)^2 - a^2} + a\sqrt{(d+1)^2 - c^2} \cos \gamma}{a^2c^2} + sk \frac{a\sqrt{(d+1)^2 - c^2} + c\sqrt{(b+1)^2 - a^2}\cos\gamma}{a^2c^2} - fg \cdot\frac{\sqrt{(b+1)^2 - a^2}(d+1) + \sqrt{(d+1)^2 - c^2}(b+1)}{a^2c^2}\right)\Bigr]
+\end{aligned}\end{equation*}$$
+
+and after highlighting the dependency on $\cos\theta$:
+
+$$\begin{equation}\begin{aligned}
+H_{\phi} = 8 \pi \cdot (\cos\alpha \cos\beta - \cos\xi) \cdot \Bigl[
+\frac{1}{2}  - \frac{1}{1 - \cos\theta} \cdot \frac{(1 - \cos\alpha \cos\beta)(\cos\alpha +\cos\beta)}{(1-\cos^2\alpha)(1-\cos^2\beta)} \\ - \frac{1 - \cos\alpha - |\cos\alpha+\cos\theta|}{1-\cos^2\theta} \cdot \frac{1}{1-\cos^2\alpha} - \frac{1 - \cos\beta - |\cos\beta+\cos\theta|}{1-\cos^2\theta} \cdot \frac{1}{1-\cos^2\beta} \\ + \frac{1 - \cos\xi}{|\cos\alpha+\cos\theta|\cdot |\cos\beta+ \cos\theta| + (\cos\alpha \cos\theta+1)(\cos\beta \cos\theta +1) + (1-\cos^2\theta)(\cos\alpha \cos\beta - \cos\xi)} \cdot \\ \left(1 + \frac{(|\cos\alpha + \cos\theta| - (\cos\alpha \cos\theta + 1))(|\cos\beta + \cos\theta| - (\cos\beta \cos\theta + 1))}{(1-\cos^2\theta)(\cos\alpha \cos\beta -  \cos\xi)}\right)
+\Bigr]
+\end{aligned}\end{equation}$$
+

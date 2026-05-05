@@ -171,11 +171,12 @@ class GravitationalWave:
         return H, G
 
 class Telescope:
-    def __init__(self, skymap, timeline, pulsar_arr, seed_bg=43):
+    def __init__(self, skymap, timeline, pulsar_arr, seed_bg=43, norm=1):
         self.skymap = skymap
         self.timeline = timeline
         self.pulsar_arr = pulsar_arr
         self.rng_bg = np.random.default_rng(seed=seed_bg)
+        self.norm = 3*norm
 
     def observe(self, grav_wave):
         p = self.pulsar_arr.pulsar_vec
@@ -233,7 +234,7 @@ class Telescope:
 
         def mu_calc(z1, z2):
             R = 2 * np.sum(z1 * z2 * self.timeline.dt, axis=0)
-            mu_k = 1/(h2 * g2) * R
+            mu_k = self.norm * 1/(h2 * g2) * R
             return mu_k
         
         for k in tqdm(range(i.shape[0])):
@@ -270,7 +271,7 @@ class Telescope:
     
     def theory(self, n_theory = 1000):
         gamma_theory = np.linspace(0 + EPS, PI, n_theory)
-        mu_theory = mu_0(gamma_theory)
+        mu_theory = self.norm * mu_0(gamma_theory)
         self.gamma_theory, self.mu_theory = gamma_theory, mu_theory
         return gamma_theory, mu_theory
 
@@ -311,19 +312,58 @@ class Telescope:
             print("There is no such plot function.")
 
 class IdealTelescope:
-    def __init__(self, skymap, timeline, pulsar_arr):
+    def __init__(self, skymap, timeline, pulsar_arr, norm = 1):
         self.skymap = skymap
         self.timeline = timeline
         self.pulsar_arr = pulsar_arr
+        self.norm = 3 * norm
 
-    def observe(self, grav_wave):
+    def analytics(self, args=(PI/2,0,1)):
         p = self.pulsar_arr.pulsar_vec
         lp = self.pulsar_arr.pulsar_dist
         Np = self.pulsar_arr.n_pulsars
         Ng = self.skymap.npix
-        _, P = grav_wave.generate_wave(self.timeline, self.skymap)
+
+        theta0, phi0, kappa = args
+        Omega_0 = hp.ang2vec(theta0, phi0)
+        delta_Omega = np.einsum('li,l->i', self.skymap.Omega, Omega_0)
+        if np.abs(kappa<500):
+            P = kappa/(np.sinh(kappa)) * np.exp(kappa * delta_Omega)
+        else: 
+            P = 2 * kappa * np.exp(kappa * (delta_Omega-1))
+
         self.skymap.plot(P , title='Gravitational Wave Background')
 
+        i, j = np.arange(0, Np), np.arange(0, Np)
+        i, j = np.meshgrid(i, j, indexing='xy')
+        mask = i>j
+        i, j = i[mask], j[mask]
+
+        p1, p2 = p[i], p[j]
+        mu = np.zeros(i.shape)
+
+        def mu_calc(p1, p2):
+            return self.norm * K_exp(Omega_0, p1, p2, kappa)
+        
+        for k in tqdm(range(i.shape[0])):
+            mu_k = mu_calc(p1[k], p2[k])
+            mu[k] = mu_k
+
+        gamma = np.arccos(np.einsum('kl,kl->k',p1,p2))
+        gamma_pta, mu_pta = gamma, mu
+
+        self.gamma_pta_true, self.mu_pta_true = gamma_pta, mu_pta
+        return gamma_pta, mu_pta
+
+    def observe(self, grav_wave, args=(PI/2,0,1)):
+        p = self.pulsar_arr.pulsar_vec
+        lp = self.pulsar_arr.pulsar_dist
+        Np = self.pulsar_arr.n_pulsars
+        Ng = self.skymap.npix
+        theta0, phi0, kappa = args
+        Omega_0 = hp.ang2vec(theta0, phi0)
+        _, P = grav_wave.generate_wave(self.timeline, self.skymap, distr_args=args)
+        self.skymap.plot(P , title='Gravitational Wave Background')
 
         i, j = np.arange(0, Np), np.arange(0, Np)
         i, j = np.meshgrid(i, j, indexing='xy')
@@ -340,21 +380,7 @@ class IdealTelescope:
             F2 = 1/2 * np.einsum('lm,lmi->i',np.einsum('l,m->lm', p2, p2), self.skymap.e) / beta2
             K12 = np.real(F1 * np.conjugate(F2))
             K12 = 1/4 * (2 * (np.einsum('l,l->', p1, p2) - np.einsum('li,l->i', self.skymap.Omega, p1) * np.einsum('li,l->i', self.skymap.Omega, p2))**2 / ((1 + np.einsum('li,l->i', self.skymap.Omega, p1)) * (1 + np.einsum('li,l->i', self.skymap.Omega, p2))) - ((1 - np.einsum('li,l->i', self.skymap.Omega, p1)) * (1 - np.einsum('li,l->i', self.skymap.Omega, p2)))) 
-            Gamma_12 = np.sum(K12 * P * self.skymap.dOmega) / (4 * PI)
-            
-            # Int_Gamma12 = 0
-            # for k in range(self.skymap.Omega.shape[1]):
-            #     Omega_k, P_k = self.skymap.Omega[:,k], P[k]
-            #     K12_k = K_12(Omega_k, p1, p2)
-            #     Int_Gamma12 += K12_k * P_k * self.skymap.dOmega
-            # Gamma_12 = Int_Gamma12 / (4 * PI)
-
-            # theta0, phi0 = PI/2,0
-            # Omega0 = np.array([-np.sin(theta0)*np.cos(phi0), 
-            #                    -np.sin(theta0)*np.sin(phi0), 
-            #                    -np.cos(theta0)])
-            # Gamma_12 = K_12(Omega0, p1, p2)
-
+            Gamma_12 = self.norm * np.sum(K12 * P * self.skymap.dOmega) / (4 * PI)
             return Gamma_12
         
         for k in tqdm(range(i.shape[0])):
@@ -364,7 +390,7 @@ class IdealTelescope:
         gamma = np.arccos(np.einsum('kl,kl->k',p1,p2))
         gamma_pta, mu_pta = gamma, mu
 
-        self.gamma_pta, self.mu_pta = gamma_pta, mu_pta
+        self.gamma_pta_est, self.mu_pta_est = gamma_pta, mu_pta
         return gamma_pta, mu_pta
     
     def average(self, gamma, mu, n_average = 21):
@@ -390,14 +416,50 @@ class IdealTelescope:
     
     def theory(self, n_theory = 1000):
         gamma_theory = np.linspace(0 + EPS, PI, n_theory)
-        mu_theory = mu_0(gamma_theory)
+        mu_theory = self.norm * mu_0(gamma_theory)
         self.gamma_theory, self.mu_theory = gamma_theory, mu_theory
         return gamma_theory, mu_theory
+
 
     def plot(self, key='hd', show=True, save=True):
         if key == 'hd':
             plt.grid(True)
-            plt.scatter(self.gamma_pta * RAD, self.mu_pta, c='blue', linewidths=1, label='PTA')
+            plt.scatter(self.gamma_pta_est * RAD, self.mu_pta_est, c='blue', linewidths=1, label='PTA-est')
+            plt.plot(self.gamma_mean * RAD, self.mu_mean, color='red', label='obs HD')
+            plt.plot(self.gamma_theory * RAD, self.mu_theory, color='black', label='theory HD')
+
+            plt.title("HD curve")
+            plt.xlabel("$\\gamma$, deg")
+            plt.ylabel("$\\Gamma(\\gamma)$")
+            plt.legend()
+            if not os.path.exists('data'):
+                os.mkdir('data')
+            if save:
+                plt.savefig('data/HD.png')
+            if show:
+                plt.show()
+
+        elif key == 'check-hd':
+            plt.grid(True)
+            plt.scatter(self.gamma_pta_est * RAD, self.mu_pta_est, c='green', linewidths=1, label='PTA-est')
+            plt.scatter(self.gamma_pta_true * RAD, self.mu_pta_true, c='blue', linewidths=1, label='PTA-true')
+            plt.plot(self.gamma_mean * RAD, self.mu_mean, color='red', label='obs HD')
+            plt.plot(self.gamma_theory * RAD, self.mu_theory, color='black', label='theory HD')
+
+            plt.title("HD curve")
+            plt.xlabel("$\\gamma$, deg")
+            plt.ylabel("$\\Gamma(\\gamma)$")
+            plt.legend()
+            if not os.path.exists('data'):
+                os.mkdir('data')
+            if save:
+                plt.savefig('data/HD.png')
+            if show:
+                plt.show()
+
+        elif key == 'theory-hd':
+            plt.grid(True)
+            plt.scatter(self.gamma_pta_true * RAD, self.mu_pta_true, c='blue', linewidths=1, label='PTA-true')
             plt.plot(self.gamma_mean * RAD, self.mu_mean, color='red', label='obs HD')
             plt.plot(self.gamma_theory * RAD, self.mu_theory, color='black', label='theory HD')
 
@@ -422,6 +484,21 @@ class IdealTelescope:
             if not os.path.exists('data'):
                 os.mkdir('data')
             plt.savefig('data/Var_HD.png')
+            if show:
+                plt.show()
+
+        elif key == 'delta-hd':
+            plt.grid(True)
+            plt.scatter(self.gamma_pta_est * RAD, np.abs((self.mu_pta_est - self.mu_pta_true)), c='orange', linewidths=1, label='delta-PTA')
+
+            plt.title("HD curve")
+            plt.xlabel("$\\gamma$, deg")
+            plt.ylabel("$\\Gamma(\\gamma)$")
+            plt.legend()
+            if not os.path.exists('data'):
+                os.mkdir('data')
+            if save:
+                plt.savefig('data/HD.png')
             if show:
                 plt.show()
 

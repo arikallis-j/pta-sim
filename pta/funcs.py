@@ -1,15 +1,80 @@
 import numpy as np
+import scipy as sp
 import healpy as hp
+
 from .const import *
 
-# Theory
 def mu_0(gamma):
     cos_gamma = np.cos(gamma)
     mu = 1/3 - 1/6 * (1 - cos_gamma)/2 + (1 - cos_gamma)/2 * np.log((1 - cos_gamma)/2)
     return mu
 
 def K_12(Omega, p1, p2):
-    return 1/4 * (2 * (np.einsum('l,l->', p1, p2) - np.einsum('l,l->', Omega, p1) * np.einsum('l,l->', Omega, p2))**2 / ((1 + np.einsum('l,l->', Omega, p1)) * (1 + np.einsum('l,l->', Omega, p2))) - ((1 - np.einsum('l,l->', Omega, p1)) * (1 - np.einsum('l,l->', Omega, p2))) ) 
+    a = np.einsum('l,l->', Omega, p1)
+    b = np.einsum('l,l->', Omega, p2)
+    c = np.einsum('l,l->', p1, p2)
+
+    return 1/4 * (
+        2*(c - a * b)**2/((1 + a)*(1 + b)) 
+        - (1 - a)*(1 - b)
+    ) 
+
+
+def expi_stable(x, s, a, k):
+    z = x + 1j*s
+    if np.abs(k)<500:
+        shc = np.sinh(k)/k
+        if np.abs(k*z) < 30:
+            return 1/shc * np.real(np.exp(-k*z) * sp.special.expi(k*(z-a)))
+        else:
+            return 1/shc * np.real(np.exp(-k*a)/(k*(z - a)))
+    else:
+        return np.real(2 * np.exp(-k*(1+a))/(z - a))
+
+def coeffs_stable(k, a, b):
+    if np.abs(k)<500:
+        chc_2 = 1/np.tanh(k) - 1/k
+        chc_3 = 3/(k*np.tanh(k)) - 3/k**2 - 1
+        chc_a = 1/a * (1/np.tanh(k) - np.exp(-k*a)/np.sinh(k)) - 1
+        chc_b = 1/b * (1/np.tanh(k) - np.exp(-k*b)/np.sinh(k)) - 1
+    else:
+        chc_2 = 1 - 1/k
+        chc_3 = -1 + 3/k - 3/k**2
+        chc_a = 1/a - 1
+        chc_b = 1/b - 1
+        
+    return chc_2, chc_3, chc_a, chc_b
+    
+def K_exp(Omega, p1, p2, kappa):
+    a = np.einsum('l,l->', Omega, p1)
+    b = np.einsum('l,l->', Omega, p2)
+    c = np.einsum('l,l->', p1, p2)
+    V = np.sqrt(1 + 2*a*b*c - c**2 - a**2 - b**2)
+    k = kappa
+    t = (a + b)/(1 + c)
+    s = V/(1 + c) 
+
+    chc_2, chc_3, chc_a, chc_b = coeffs_stable(k, a, b)
+
+    return (
+        + 1/3
+        + 1/2 * (
+            + (chc_a + chc_b - 1/3*chc_3)
+            + (a*b - c) * (chc_a/(1 - a**2) + chc_b/(1 - b**2) - chc_3/2)
+            - (a+b) * (chc_2/2)
+        )
+
+        + (1-c)/2 * (
+            + expi_stable(t, s, a, k)
+            + expi_stable(t, s, b, k)
+            - expi_stable(t, s, -1, k)
+            - expi_stable(t, s, +1, k)
+            - 1/6
+            - (chc_a + chc_b - 1/3*chc_3)
+        )
+        
+    )
+
 
 # Distributions
 def isotropic(skymap, args=None):
@@ -29,11 +94,14 @@ def delta_2d(skymap, args=(PI/2,0)):
     return delta
 
 def gaussian(skymap, args=(PI/2,0,1)):
-    theta0, phi0, sigma = args
+    theta0, phi0, kappa = args
     Omega_0 = hp.ang2vec(theta0, phi0)
     delta_Omega = np.einsum('li,l->i', skymap.Omega, Omega_0)
-    kappa = 1 / sigma**2
-    gauss = kappa/(np.sinh(kappa)) * np.exp(kappa * delta_Omega)
+    if np.abs(kappa<500):
+        gauss = kappa/np.sinh(kappa) * np.exp(kappa * delta_Omega)
+    else: 
+        gauss = 2 * kappa * np.exp(kappa * (delta_Omega-1))
+
     return gauss
 
 def string_2d(skymap, args=(PI/2, 360)):

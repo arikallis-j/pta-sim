@@ -38,9 +38,8 @@ class Test(pta.Experiment):
 #             spectrum=pta.delta_1d,)
 # test.run()
 
-
 class TestIdeal(pta.Experiment):
-    def __init__(self, n_map=100, n_spec=100, n_arr=100, seed_psr=42, distribution=pta.dipole, spectrum=pta.delta_1d, distr_args=(1), spec_args=(10)):
+    def __init__(self, n_map=100, n_spec=100, n_arr=42, seed_psr=100, distribution=pta.dipole, spectrum=pta.delta_1d, distr_args=(1), spec_args=(10)):
         self.skymap = pta.SkyMap(n_map)
         self.timeline = pta.TimeLine(n_spec)
         self.pulsar_arr = pta.PulsarArray(n_arr, seed_psr=seed_psr)
@@ -50,20 +49,25 @@ class TestIdeal(pta.Experiment):
         self.distr_args = distr_args
     
     def pipeline(self, data):
-        gamma_pta, mu_pta = self.telescope.observe(self.grav_wave)
+        length = 20 # crit ~ 10.6
+        theta, phi, kappa = pta.PI/2, pta.PI, 1/(length * pta.PI/180)**2
+        print(kappa)
+        args = theta, phi, kappa
+        gamma_pta, mu_pta = self.telescope.analytics(args=args)
+        # gamma_pta, mu_pta = self.telescope.observe(self.grav_wave, args=args)
         gamma_mean, mu_mean, mu_std = self.telescope.average(gamma_pta, mu_pta)
         gamma_theory, mu_theory = self.telescope.theory()
         return 0
     
     def postprocess(self, result):
-        self.telescope.plot('hd')
+        self.telescope.plot('theory-hd')
         # self.telescope.plot('var-hd')
         return 0
     
-test = TestIdeal(n_map=10, 
+test = TestIdeal(n_map=400, 
                  n_spec=2, 
-                 n_arr=20, 
+                 n_arr=100, 
                  seed_psr=42,
-                 distribution=pta.delta_2d, 
+                 distribution=pta.gaussian, 
                  spectrum=pta.delta_1d,)
 test.run()
