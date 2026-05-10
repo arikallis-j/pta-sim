@@ -19,7 +19,6 @@ def K_12(Omega, p1, p2):
         - (1 - a)*(1 - b)
     ) 
 
-
 def expi_stable(x, s, a, k):
     z = x + 1j*s
     if np.abs(k)<500:
@@ -33,15 +32,18 @@ def expi_stable(x, s, a, k):
 
 def coeffs_stable(k, a, b):
     if np.abs(k)<500:
-        chc_2 = 1/np.tanh(k) - 1/k
-        chc_3 = 3/(k*np.tanh(k)) - 3/k**2 - 1
-        chc_a = 1/a * (1/np.tanh(k) - np.exp(-k*a)/np.sinh(k)) - 1
-        chc_b = 1/b * (1/np.tanh(k) - np.exp(-k*b)/np.sinh(k)) - 1
+        coth = 1/np.tanh(k)
+        coth_a = np.exp(-k*a)/np.sinh(k)
+        coth_b = np.exp(-k*b)/np.sinh(k)
     else:
-        chc_2 = 1 - 1/k
-        chc_3 = -1 + 3/k - 3/k**2
-        chc_a = 1/a - 1
-        chc_b = 1/b - 1
+        coth = 1
+        coth_a = 0
+        coth_b = 0
+
+    chc_2 = coth - 1/k
+    chc_3 = 3*coth/k - 3/k**2 - 1
+    chc_a = - coth_a/a + coth/a - 1
+    chc_b = - coth_b/b + coth/b - 1
         
     return chc_2, chc_3, chc_a, chc_b
     
@@ -59,7 +61,7 @@ def K_exp(Omega, p1, p2, kappa):
     return (
         + 1/3
         + 1/2 * (
-            + (chc_a + chc_b - 1/3*chc_3)
+            + (c) * (chc_a + chc_b - chc_3/3)
             + (a*b - c) * (chc_a/(1 - a**2) + chc_b/(1 - b**2) - chc_3/2)
             - (a+b) * (chc_2/2)
         )
@@ -70,9 +72,7 @@ def K_exp(Omega, p1, p2, kappa):
             - expi_stable(t, s, -1, k)
             - expi_stable(t, s, +1, k)
             - 1/6
-            - (chc_a + chc_b - 1/3*chc_3)
         )
-        
     )
 
 

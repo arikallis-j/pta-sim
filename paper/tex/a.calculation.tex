@@ -1,0 +1,171 @@
+\section{How to calculate the integrals}
+For further calculations, we will use the standard integrals, where $k \in \mathbb{Z}$, $n, m \in \mathbb{N}_0$ and $- 1 < a, c < 1$:
+
+\begin{equation}\begin{aligned}
+V_k(a) = \int_{0}^{2 \pi} \frac{\cos k\phi \cdot d\phi}{a\cdot \cos \phi + 1}
+\end{aligned}\end{equation}
+\begin{equation}\begin{aligned}
+W_m^n(a) = \int_{0}^{2 \pi} \frac{\sin^n \phi \cdot \cos^m \phi \cdot d \phi }{a\cdot \cos \phi + 1}
+\end{aligned}\end{equation}
+\begin{equation}\begin{aligned}
+Z(a, c, \gamma) = \int_{0}^{2 \pi} \frac{d \phi}{(a\cdot \cos \phi + 1)(c \cdot \cos (\phi - \gamma) + 1)}
+\end{aligned}\end{equation}
+
+
+\subsection{Integral V}
+We can find the integral $V_k(a)$ using a two-dimensional Poisson kernel:
+\begin{equation}\begin{aligned}
+P_r(\phi) = \sum_{n = -\infty}^{\infty} r^{|n|} e^{in\phi} = \frac{1 - r^2}{1 - 2r\cos \phi + r^2},
+\end{aligned}\end{equation}
+where $0 \le r < 1$. Let's rewrite the denominator in the same way:
+\begin{equation}\begin{aligned}
+1 + a \cdot\cos \phi = A (1 + r^2 - 2r\cos\phi)
+\end{aligned}\end{equation}
+\begin{equation*}\begin{aligned}
+\begin{cases}
+    A \cdot (1 + r^2) = 1 \\
+    A \cdot (-2r) = a
+\end{cases}
+\end{aligned}\end{equation*}
+\begin{equation}\begin{aligned}
+    A = \frac{1}{1 + r^2} 
+\end{aligned}\end{equation}
+\begin{equation*}\begin{aligned}
+-\frac{2}{a}r = \frac{1}{A} = 1 + r^2
+\end{aligned}\end{equation*}
+\begin{equation*}\begin{aligned}
+ r^2 + \frac{2}{a}r + 1 = 0
+\end{aligned}\end{equation*}
+\begin{equation}\begin{aligned}
+ r = \frac{-1 + \sqrt{1 - a^2}}{a}
+\end{aligned}\end{equation}
+
+Then we get:
+\begin{equation*}\begin{aligned}
+\frac{1}{1 + a \cdot\cos \phi} = \frac{1 + r^2}{1 - r^2} \cdot \frac{1-r^2}{1 + r^2 - 2r\cos \phi}
+\end{aligned}\end{equation*}
+\begin{equation}\begin{aligned}
+\frac{1}{1 + a \cdot\cos \phi} = \frac{1 + r^2}{1 - r^2} \sum_{n = -\infty}^{\infty} r^{|n|} e^{in\phi}
+\end{aligned}\end{equation}
+where: 
+\begin{equation*}\begin{aligned}
+\frac{1 + r^2}{1 - r^2} = - \frac{2r}{a} \cdot \frac{1}{- \frac{2r}{a} \cdot \sqrt{1 - a^2}} = \frac{1}{\sqrt{1 - a^2}}
+\end{aligned}\end{equation*}
+
+And let's rewrite the numerator:
+\begin{equation*}\begin{aligned}
+\cos k \phi = \frac{1}{2} \cdot(e^{ik\phi} + e^{-ik\phi})
+\end{aligned}\end{equation*}
+
+Then the integral $V_k(a)$ will be equal to:
+\begin{equation*}\begin{aligned}
+V_k(a) = \frac{1}{2\sqrt{1 - a^2}} \sum_{n = -\infty}^{\infty} r^{|n|} \int_{0}^{2 \pi} e^{in\phi} \cdot(e^{ik\phi} + e^{-ik\phi}) \cdot d\phi
+\end{aligned}\end{equation*}
+\begin{equation*}\begin{aligned}
+V_k(a) = \frac{1}{2\sqrt{1 - a^2}} \sum_{n = -\infty}^{\infty} r^{|n|} \int_{0}^{2 \pi} (e^{i\phi(k+n)} + e^{i\phi(n-k)}) \cdot d\phi
+\end{aligned}\end{equation*}
+\begin{equation*}\begin{aligned}
+V_k(a) = \frac{2\pi}{\sqrt{1 - a^2}} \sum_{n = -\infty}^{\infty} r^{|n|} \cdot \frac{\delta_{n,k} + \delta_{n,-k}}{2}  
+\end{aligned}\end{equation*}
+\begin{equation*}\begin{aligned}
+V_k(a) = \frac{2\pi}{\sqrt{1 - a^2}} \cdot \frac{r^{|k|} + r^{|-k|}}{2}
+\end{aligned}\end{equation*}
+
+\begin{equation}\begin{aligned}
+V_k(a) = \frac{2\pi}{\sqrt{1 - a^2}} \cdot \left(\frac{-1 + \sqrt{1 - a^2}}{a}\right)^{|k|}
+\end{aligned}\end{equation}
+
+\subsection{Integral W}
+The first thing we notice is that for $n = 2k+1$ the integral is zero, because:
+\begin{equation*}\begin{aligned}
+W_m^{2k+1}(a) = \int_{0}^{2 \pi} d \phi \cdot \sin \phi \cdot \frac{\sin^{2k} \phi \cdot \cos^m \phi}{a\cdot \cos \phi + 1} \\=  \int_{0}^{2 \pi} d \phi \cdot \sin (-\phi) \cdot \frac{\sin^{2k}(-\phi) \cdot \cos^m (-\phi)}{a\cdot \cos (-\phi) + 1} = - W_m^{2k+1}(a)
+\end{aligned}\end{equation*}
+\begin{equation}\begin{aligned}
+W_m^{2k+1}(a) = 0
+\end{aligned}\end{equation}
+and also, let's add a formula for reduction:
+\begin{equation}\begin{aligned}
+W_m^{n}(a) = W_m^{n-2}(a) - W_{m+2}^{n-2}(a),
+\end{aligned}\end{equation}
+because:
+\begin{equation}\begin{aligned}
+\sin^n(\phi) \cos^m(\phi) =  \sin^{n-2}(\phi) \cos^m(\phi) - \sin^{n-2}(\phi) \cos^{m+2}(\phi)  
+\end{aligned}\end{equation}
+
+Next, we can rewrite $\sin^{2k}\phi$  and $\cos^m\phi$ through $\cos k\phi$ like this:
+\begin{equation*}\begin{aligned}
+\sin^{2k}(\phi) = \frac{\left(e^{i\phi} - e^{-i\phi} \right)^{2k}}{(2i)^{2k}} = \frac{(-1)^k}{2^{2k}} \cdot \sum_{s=0}^{2k} \binom{2k}{s} \cdot (e^{i\phi})^{2k-s} (- e^{-i\phi})^{s}
+\end{aligned}\end{equation*}
+\begin{equation}\begin{aligned}
+\sin^{2k}(\phi) = \frac{(-1)^k}{2^{2k}} \cdot \sum_{s=0}^{2k} \binom{2k}{s} \cdot (-1)^{s} \cdot e^{i\phi (2k - 2s)}
+\end{aligned}\end{equation}
+\begin{equation*}\begin{aligned}
+\cos^m(\phi) = \frac{1}{2^m} \cdot \left( e^{i\phi} + e^{-i\phi} \right)^m = \frac{1}{2^m} \cdot \sum_{t=0}^m \binom{m}{t} (e^{i\phi})^{m-t} (e^{-i\phi})^{t}
+\end{aligned}\end{equation*}
+\begin{equation}\begin{aligned}
+\cos^m(\phi) = \frac{1}{2^m} \cdot \sum_{t=0}^m \binom{m}{t} \cdot e^{i\phi(m-2t)}
+\end{aligned}\end{equation}
+
+As a result, the numerator will look like:
+\begin{equation}\begin{aligned}
+\sin^{2k}(\phi) \cos^m(\phi) =  \frac{(-1)^k}{2^{2k+m}} \cdot \sum_{s=0}^{2k} \sum_{t=0}^m \binom{2k}{s}\binom{m}{t} \cdot (-1)^{s} \cdot \\ e^{i\phi(2k+m - 2s - 2t)}
+\end{aligned}\end{equation}
+
+And the integral will be equal to:
+\begin{equation}\begin{aligned}
+W_m^{2k}(a) =  \frac{(-1)^k}{2^{2k+m}} \cdot \sum_{s=0}^{2k} \sum_{t=0}^m \binom{2k}{s}\binom{m}{t} \cdot (-1)^{s} \cdot  V_{2k+m - 2s - 2t}(a)
+\end{aligned}\end{equation}
+
+where $V_{-k}(a) = V_{k}(a)$.
+
+\subsection{Integral Z}
+This integral is calculated in the complex plane, and the final result looks like this:
+\begin{equation}\begin{aligned}
+Z(a, c, \gamma) = \frac{2\pi}{1 - ac\cos\gamma + \sqrt{1-a^2}\sqrt{1-c^2}} \cdot \\ \left(\frac{1}{\sqrt{1-a^2}} + \frac{1}{\sqrt{1-c^2}} \right)
+\end{aligned}\end{equation}
+
+Also note that any integral of the form:
+\begin{equation}\begin{aligned}
+Y^n_m(a, c, \gamma) = \int_{0}^{2 \pi} \frac{\sin^n \phi \cdot \cos^m \phi \cdot d \phi}{(a\cdot \cos \phi + 1)(c \cdot \cos (\phi - \gamma) + 1)}
+\end{aligned}\end{equation}
+
+Can be rewritten as:
+\begin{equation}\begin{aligned}
+Y^n_m(a, c, \gamma) = D\cdot Z(a,c,\gamma) + \sum_{k, s=0}^{N-2}\sum_{s=0}^{N-2} B_k^{s} \cdot W_k^s(0)  \\ + \sum_{k=0}^{N-1}\sum_{s=0}^{N-1} A_k^s \cdot W_k^s(a) + \sum_{k=0}^{N-1}\sum_{s=0}^{N-1} C_k^s \cdot W_k^s(c)
+\end{aligned}\end{equation}
+where $N = \max(n, m)$, because the numerator and denominator in $Y_m^n$ are polynomials in ($\cos \phi$, $\sin \phi$) and we can write:
+\begin{equation}\begin{aligned}
+\frac{P_N(x, y)}{L_1(x,y)\cdot L_2(x,y)} = \frac{P_0}{L_1(x,y)\cdot L_2(x,y)} + P_{N-2}(x,y) \\+ \frac{P_{N-1}^{(1)}(x,y)}{L_1(x,y)} + \frac{P_{N-1}^{(2)}(x,y)}{L_2(x,y)} 
+\end{aligned}\end{equation}
+where $x = \cos \phi$, $y = \sin \phi$, and: 
+\begin{equation}\begin{aligned}
+\begin{cases}
+    P_N(x,y) = x^n y^m \\
+    L_1(x,y) = xa + 1 \\
+    L_2(x,y) = xc\cos \gamma  + yc\sin\gamma + 1
+\end{cases}
+\end{aligned}\end{equation}
+
+And after reduction for $W_m^n(x)$, we can say that all our integrals are represented as:
+\begin{equation}\begin{aligned}
+K(a, c, \gamma) = D\cdot Z(a,c,\gamma) + \sum_{k}^{N-2} B_k' \cdot W_k^0(0)  \\ + \sum_{k=0}^{N-1} A_k' \cdot W_k^0(a) + \sum_{k=0}^{N-1} C_k' \cdot W_k^0(c)
+\end{aligned}\end{equation}
+
+Or in terms of $V_k(x)$:
+\begin{equation}\begin{aligned}
+K(a, c, \gamma) = D\cdot Z(a,c,\gamma) + B \cdot V_0(0)  \\ + \sum_{k=0}^{N-1} \left( A_k \cdot V_k(a) + C_k \cdot V_k(c) \right)
+\end{aligned}\end{equation}
+where $V_0(0) = 2 \pi$. As the result, for the integrals $I, J, K, H$ we will have:
+\begin{equation}\begin{aligned}
+I_{\phi}(a, b, c, d, \gamma) = 2\pi \cdot B^{(I)} 
+\end{aligned}\end{equation}
+\begin{equation}\begin{aligned}
+J_{\phi}(a, b, c, d, \gamma) = 2\pi \cdot \frac{B^{(J)}}{b+1}  + \sum_{k=0}^{3} \frac{A_k^{(J)}} {b+1} \cdot V_k\left(\frac{a}{b+1}\right) 
+\end{aligned}\end{equation}
+\begin{equation}\begin{aligned}
+K_{\phi}(a, b, c, d, \gamma) = 2\pi \frac{B^{(K)}}{d+1} + \sum_{k=0}^{3} \frac{C_k^{(K)}} {d+1} \cdot V_k\left(\frac{c}{d+1}\right) 
+\end{aligned}\end{equation}
+
+\begin{equation}\begin{aligned}
+H_{\phi}(a, b, c, d, \gamma) = 2\pi \cdot \frac{B^{(H)}}{(b+1)(d+1)} \\+ \frac{D^{(H)}}{(b+1)(d+1)}\cdot Z\left(\frac{a}{b+1},\frac{c}{d+1},\gamma\right)  \\+\sum_{k=0}^{3} \frac{A_k^{(H)}} {(b+1)(d+1)} \cdot V_k\left(\frac{a}{b+1}\right) \\ + \sum_{k=0}^{3} \frac{C_k^{(H)}} {(b+1)(d+1)} \cdot V_k\left(\frac{c}{d+1}\right)
+\end{aligned}\end{equation}

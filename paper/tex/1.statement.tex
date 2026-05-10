@@ -48,7 +48,7 @@ and $\mathcal{K}(\hat{\Omega},\hat{p}, \hat{q})$ is the integral kernel, which i
 
 And in our case, we assume that the power spectrum is Gaussian and looks like this:
 \begin{equation}
-\mathcal{P}(\hat{\Omega}) = \exp \left[ - \frac{(\hat{\Omega} - \hat{\Omega}_0)^2}{2 \sigma^2} \right],
+\mathcal{P}(\hat{\Omega}) \sim \exp \left[ - \frac{(\hat{\Omega} - \hat{\Omega}_0)^2}{2 \sigma^2} \right],
 \end{equation}
 where $\hat{\Omega}_0$ is the center of the source and $\sigma$ is the width of the Gaussian. Converting the numerator:
 $$
@@ -60,19 +60,30 @@ $$
 
 we have:
 $$
-\mathcal{P}(\hat{\Omega}) = \exp \left[ - \frac{2 (1 - \hat{\Omega} \cdot \hat{\Omega}_0)}{2 \sigma^2} \right],
+\mathcal{P}(\hat{\Omega}) \sim \exp \left[ - \frac{2 (1 - \hat{\Omega} \cdot \hat{\Omega}_0)}{2 \sigma^2} \right],
 $$
 
 $$
-\mathcal{P}(\hat{\Omega}) = \exp \left[ - \frac{1}{\sigma^2} \right] \cdot  \exp \left[ \frac{\hat{\Omega} \cdot \hat{\Omega}_0 }{\sigma^2}\right].
+\mathcal{P}(\hat{\Omega}) \sim \exp \left[ - \frac{1}{\sigma^2} \right] \cdot  \exp \left[ \frac{\hat{\Omega} \cdot \hat{\Omega}_0 }{\sigma^2}\right].
 $$
 
 Let $\kappa = 1/\sigma^2$, and as a result we have:
 \begin{equation}
-\mathcal{P}(\hat{\Omega}) = \exp \left(-\kappa \right) \cdot  \exp \left( \kappa \hat{\Omega} \cdot \hat{\Omega}_0 \right).
+\mathcal{P}(\hat{\Omega}) \sim \exp \left(-\kappa \right) \cdot  \exp \left( \kappa \hat{\Omega} \cdot \hat{\Omega}_0 \right).
 \end{equation}
+
+And let's normalize our spectrum:
+\begin{equation}
+\frac{1}{4 \pi} \cdot \int_{S^2} d \hat{\Omega} \cdot \mathcal{P}(\hat{\Omega}) = 1
+\end{equation}
+
+where:
+\begin{equation}
+\mathcal{P}(\hat{\Omega}) = G (\kappa) \cdot  \exp \left( \kappa \hat{\Omega} \cdot \hat{\Omega}_0 \right)
+\end{equation}
+
 
 And to find the Hellings-Downs curve for a Gaussian source, we need to calculate:
 \begin{equation}
-\Gamma^{(g)}(\hat{p}, \hat{q}) = \frac{3 e^{-\kappa}}{4\pi}\int_{S^2} d \hat{\Omega} \cdot \mathcal{K}(\hat{\Omega}, \hat{p}, \hat{q}) \cdot e^{\kappa \hat{\Omega} \cdot \hat{\Omega}_0}
+\Gamma^{(g)}(\hat{p}, \hat{q}) = \frac{3 \cdot G (\kappa)}{4\pi}\int_{S^2} d \hat{\Omega} \cdot \mathcal{K}(\hat{\Omega}, \hat{p}, \hat{q}) \cdot e^{\kappa \hat{\Omega} \cdot \hat{\Omega}_0}
 \end{equation}

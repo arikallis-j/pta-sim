@@ -252,8 +252,8 @@ def H_int(theta, alpha, beta, gamma):
 
     H_0 = + 8*PI * (a*b - c) * (
         +  1/2
-        +  ((a*x+1)-np.abs(a+x))/(x**2-1) * 1/(1-a**2)
-        +  ((b*x+1)-np.abs(b+x))/(x**2-1) * 1/(1-b**2)
+        +  (np.abs(a+x) - (a*x+1))/(1 - x**2) * 1/(1-a**2)
+        +  (np.abs(b+x) - (b*x+1))/(1 - x**2) * 1/(1-b**2)
         + (1-c) * (
             1 + (np.abs(a+x) - (a*x+1))*(np.abs(b+x) - (b*x+1))/((x**2-1)*(c - a*b))
         ) / (np.abs(a+x)*np.abs(b+x) + (a*x+1)*(b*x+1) + (x**2-1)*(c - a*b))
