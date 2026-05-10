@@ -680,5 +680,5 @@ K_{\phi}(a, b, c, d, \gamma) = 2\pi \frac{B^{(K)}}{d+1} + \sum_{k=0}^{3} \frac{C
 \end{aligned}\end{equation}$$
 
 $$\begin{equation}\begin{aligned}
-H_{\phi}(a, b, c, d, \gamma) = 2\pi \cdot \frac{B^{(H)}}{(b+1)(d+1)} \\+ \frac{D^{(H)}}{(b+1)(d+1)}\cdot Z\left(\frac{a}{b+1},\frac{c}{d+1},\gamma\right)  \\+\sum_{k=0}^{3} \frac{A_k^{(H)}} {(b+1)(d+1)} \cdot V_k\left(\frac{a}{b+1}\right) \\ + \sum_{k=0}^{3} \frac{C_k^{(H)}} {(b+1)(d+1)} \cdot V_k\left(\frac{c}{d+1}\right)
+H_{\phi}(a, b, c, d, \gamma) = 2\pi \cdot \frac{B^{(H)}}{(b+1)(d+1)} \\ + \frac{D^{(H)}}{(b+1)(d+1)}\cdot Z\left(\frac{a}{b+1},\frac{c}{d+1},\gamma\right)  \\ +\sum_{k=0}^{3} \frac{A_k^{(H)}} {(b+1)(d+1)} \cdot V_k\left(\frac{a}{b+1}\right) \\ + \sum_{k=0}^{3} \frac{C_k^{(H)}} {(b+1)(d+1)} \cdot V_k\left(\frac{c}{d+1}\right)
 \end{aligned}\end{equation}$$
