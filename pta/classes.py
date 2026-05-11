@@ -316,7 +316,7 @@ class IdealTelescope:
         self.skymap = skymap
         self.timeline = timeline
         self.pulsar_arr = pulsar_arr
-        self.norm = 3 * norm
+        self.norm = norm
 
     def analytics(self, args=(PI/2,0,1)):
         p = self.pulsar_arr.pulsar_vec
@@ -339,7 +339,7 @@ class IdealTelescope:
         mu = np.zeros(i.shape)
 
         def mu_calc(p1, p2):
-            return self.norm * (K_12(Omega_0, p1, p2)-K_exp(Omega_0, p1, p2, kappa))
+            return self.norm * K_exp(Omega_0, p1, p2, kappa)
         
         for k in tqdm(range(i.shape[0])):
             mu_k = mu_calc(p1[k], p2[k])

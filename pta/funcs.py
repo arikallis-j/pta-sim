@@ -6,7 +6,7 @@ from .const import *
 
 def mu_0(gamma):
     cos_gamma = np.cos(gamma)
-    mu = 1/3 - 1/6 * (1 - cos_gamma)/2 + (1 - cos_gamma)/2 * np.log((1 - cos_gamma)/2)
+    mu = 3 * (1/3 - 1/6 * (1 - cos_gamma)/2 + (1 - cos_gamma)/2 * np.log((1 - cos_gamma)/2))
     return mu
 
 def K_12(Omega, p1, p2):
@@ -14,7 +14,7 @@ def K_12(Omega, p1, p2):
     b = np.einsum('l,l->', Omega, p2)
     c = np.einsum('l,l->', p1, p2)
 
-    return 1/4 * (
+    return 3/4 * (
         2*(c - a * b)**2/((1 + a)*(1 + b)) 
         - (1 - a)*(1 - b)
     ) 
@@ -30,7 +30,6 @@ def _scaled_expi(w, switch=100.0, max_terms=50):
     if w.ndim == 0:
         if abs(w) < switch:
             return - np.exp(-w) * sp.special.exp1(-w)
-
         term = 1.0 / w
         s = term
         for n in range(1, max_terms):
@@ -85,7 +84,7 @@ def K_exp(Omega, p1, p2, kappa):
     chc_a = - coth_a/a + coth/a - 1
     chc_b = - coth_b/b + coth/b - 1
         
-    return (
+    return 3 * (
         + 1/3
         + 1/2 * (
             + (c) * (chc_a + chc_b - chc_3/3)
