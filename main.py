@@ -49,7 +49,7 @@ class TestIdeal(pta.Experiment):
         self.distr_args = distr_args
     
     def pipeline(self, data):
-        length = 20 # crit ~ 10.6
+        length = 1 # crit ~ 10.6
         theta, phi, kappa = pta.PI/2, pta.PI, 1/(length * pta.PI/180)**2
         print(kappa)
         args = theta, phi, kappa
@@ -64,7 +64,7 @@ class TestIdeal(pta.Experiment):
         # self.telescope.plot('var-hd')
         return 0
     
-test = TestIdeal(n_map=400, 
+test = TestIdeal(n_map=100, 
                  n_spec=2, 
                  n_arr=100, 
                  seed_psr=42,

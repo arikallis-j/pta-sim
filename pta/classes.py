@@ -327,11 +327,7 @@ class IdealTelescope:
         theta0, phi0, kappa = args
         Omega_0 = hp.ang2vec(theta0, phi0)
         delta_Omega = np.einsum('li,l->i', self.skymap.Omega, Omega_0)
-        if np.abs(kappa<500):
-            P = kappa/(np.sinh(kappa)) * np.exp(kappa * delta_Omega)
-        else: 
-            P = 2 * kappa * np.exp(kappa * (delta_Omega-1))
-
+        P = 2*kappa/(1 - np.exp(-2*kappa)) * np.exp(kappa * (delta_Omega-1))
         self.skymap.plot(P , title='Gravitational Wave Background')
 
         i, j = np.arange(0, Np), np.arange(0, Np)
@@ -343,7 +339,7 @@ class IdealTelescope:
         mu = np.zeros(i.shape)
 
         def mu_calc(p1, p2):
-            return self.norm * K_exp(Omega_0, p1, p2, kappa)
+            return self.norm * (K_12(Omega_0, p1, p2)-K_exp(Omega_0, p1, p2, kappa))
         
         for k in tqdm(range(i.shape[0])):
             mu_k = mu_calc(p1[k], p2[k])

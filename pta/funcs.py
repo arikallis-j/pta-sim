@@ -19,34 +19,54 @@ def K_12(Omega, p1, p2):
         - (1 - a)*(1 - b)
     ) 
 
+def _scaled_expi(w, switch=100.0, max_terms=50):
+    """
+    Вычисляет exp(-w) * Ei(w) устойчиво.
+    Для |w| < switch — напрямую.
+    Для |w| >= switch — через асимптотический ряд.
+    """
+    w = np.asarray(w, dtype=np.complex128)
+
+    if w.ndim == 0:
+        if abs(w) < switch:
+            return - np.exp(-w) * sp.special.exp1(-w)
+
+        term = 1.0 / w
+        s = term
+        for n in range(1, max_terms):
+            term *= n / w
+            s_new = s + term
+            if abs(term) <= np.finfo(float).eps * abs(s_new):
+                return s_new
+            s = s_new
+        return s
+
+    out = np.empty_like(w)
+    small = np.abs(w) < switch
+    out[small] = np.exp(-w[small]) * expi(w[small])
+
+    big = ~small
+    if np.any(big):
+        wb = w[big]
+        term = 1.0 / wb
+        s = term.copy()
+        for n in range(1, max_terms):
+            term *= n / wb
+            s_new = s + term
+            if np.all(np.abs(term) <= np.finfo(float).eps * np.abs(s_new)):
+                s = s_new
+                break
+            s = s_new
+        out[big] = s
+
+    return out
+
 def expi_stable(x, s, a, k):
-    z = x + 1j*s
-    if np.abs(k)<500:
-        shc = np.sinh(k)/k
-        if np.abs(k*z) < 30:
-            return 1/shc * np.real(np.exp(-k*z) * sp.special.expi(k*(z-a)))
-        else:
-            return 1/shc * np.real(np.exp(-k*a)/(k*(z - a)))
-    else:
-        return np.real(2 * np.exp(-k*(1+a))/(z - a))
+    z = x + 1j * s
+    w = k * (z - a)
+    norm = 2 * k * np.exp(-k * (a + 1.0))/(-np.expm1(-2.0 * k))
+    return norm * np.real(_scaled_expi(w))
 
-def coeffs_stable(k, a, b):
-    if np.abs(k)<500:
-        coth = 1/np.tanh(k)
-        coth_a = np.exp(-k*a)/np.sinh(k)
-        coth_b = np.exp(-k*b)/np.sinh(k)
-    else:
-        coth = 1
-        coth_a = 0
-        coth_b = 0
-
-    chc_2 = coth - 1/k
-    chc_3 = 3*coth/k - 3/k**2 - 1
-    chc_a = - coth_a/a + coth/a - 1
-    chc_b = - coth_b/b + coth/b - 1
-        
-    return chc_2, chc_3, chc_a, chc_b
-    
 def K_exp(Omega, p1, p2, kappa):
     a = np.einsum('l,l->', Omega, p1)
     b = np.einsum('l,l->', Omega, p2)
@@ -56,8 +76,15 @@ def K_exp(Omega, p1, p2, kappa):
     t = (a + b)/(1 + c)
     s = V/(1 + c) 
 
-    chc_2, chc_3, chc_a, chc_b = coeffs_stable(k, a, b)
+    coth = 1/np.tanh(k)
+    coth_a = np.exp(-k*(1+a)) * 2/(1 - np.exp(-2*k))
+    coth_b = np.exp(-k*(1+b)) * 2/(1 - np.exp(-2*k))
 
+    chc_2 = coth - 1/k
+    chc_3 = 3*coth/k - 3/k**2 - 1
+    chc_a = - coth_a/a + coth/a - 1
+    chc_b = - coth_b/b + coth/b - 1
+        
     return (
         + 1/3
         + 1/2 * (
@@ -97,11 +124,7 @@ def gaussian(skymap, args=(PI/2,0,1)):
     theta0, phi0, kappa = args
     Omega_0 = hp.ang2vec(theta0, phi0)
     delta_Omega = np.einsum('li,l->i', skymap.Omega, Omega_0)
-    if np.abs(kappa<500):
-        gauss = kappa/np.sinh(kappa) * np.exp(kappa * delta_Omega)
-    else: 
-        gauss = 2 * kappa * np.exp(kappa * (delta_Omega-1))
-
+    gauss  = 2*kappa/(1 - np.exp(-2*kappa)) * np.exp(kappa * (delta_Omega-1))
     return gauss
 
 def string_2d(skymap, args=(PI/2, 360)):
