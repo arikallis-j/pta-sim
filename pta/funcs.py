@@ -9,6 +9,16 @@ def mu_0(gamma):
     mu = 3 * (1/3 - 1/6 * (1 - cos_gamma)/2 + (1 - cos_gamma)/2 * np.log((1 - cos_gamma)/2))
     return mu
 
+def K_0(Omega, p1, p2):
+    a = np.einsum('l,l->', Omega, p1)
+    b = np.einsum('l,l->', Omega, p2)
+    c = np.einsum('l,l->', p1, p2)
+
+    return 3 * (
+        1/3 - 1/6 * (1 - c)/2 
+        + (1 - c)/2 * np.log((1 - c)/2)
+    ) 
+
 def K_12(Omega, p1, p2):
     a = np.einsum('l,l->', Omega, p1)
     b = np.einsum('l,l->', Omega, p2)
@@ -75,30 +85,24 @@ def K_exp(Omega, p1, p2, kappa):
     t = (a + b)/(1 + c)
     s = V/(1 + c) 
 
-    coth = 1/np.tanh(k)
-    coth_a = np.exp(-k*(1+a)) * 2/(1 - np.exp(-2*k))
-    coth_b = np.exp(-k*(1+b)) * 2/(1 - np.exp(-2*k))
-
-    chc_2 = coth - 1/k
-    chc_3 = 3*coth/k - 3/k**2 - 1
-    chc_a = - coth_a/a + coth/a - 1
-    chc_b = - coth_b/b + coth/b - 1
+    L_g = (
+        + expi_stable(t, s, a, k)
+        + expi_stable(t, s, b, k)
+        - expi_stable(t, s, -1, k)
+        - expi_stable(t, s, +1, k)
+    )
         
-    return 3 * (
-        + 1/3
-        + 1/2 * (
-            + (c) * (chc_a + chc_b - chc_3/3)
-            + (a*b - c) * (chc_a/(1 - a**2) + chc_b/(1 - b**2) - chc_3/2)
-            - (a+b) * (chc_2/2)
-        )
+    D_g = (
+        + (b - c*a)/(1 - a**2) * (1/np.tanh(k) - a * (np.exp(-k*(1+a))/a * 2/(1 - np.exp(-2*k)) + 1))
+        + (a - c*b)/(1 - b**2) * (1/np.tanh(k) - b * (np.exp(-k*(1+b))/b * 2/(1 - np.exp(-2*k)) + 1))
+        + (c - 3*a*b)/6 * (1/np.tanh(k)*3/k - 3/k**2 - 1)
+        - (a+b)/2 * (1/np.tanh(k) - 1/k)
+    )
 
-        + (1-c)/2 * (
-            + expi_stable(t, s, a, k)
-            + expi_stable(t, s, b, k)
-            - expi_stable(t, s, -1, k)
-            - expi_stable(t, s, +1, k)
-            - 1/6
-        )
+    return 3 * (
+        + 1/3 - 1/6 * (1 - c)/2
+        + (1 - c)/2 * L_g
+        + 1/2 * D_g
     )
 
 

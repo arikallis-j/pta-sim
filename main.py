@@ -49,7 +49,7 @@ class TestIdeal(pta.Experiment):
         self.distr_args = distr_args
     
     def pipeline(self, data):
-        length = 1 # crit ~ 10.6
+        length = 10 # crit ~ 10.6
         theta, phi, kappa = pta.PI/2, pta.PI, 1/(length * pta.PI/180)**2
         print(kappa)
         args = theta, phi, kappa
